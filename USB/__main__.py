@@ -1,11 +1,12 @@
 from session import Session
-import sys
+import sys,os
 """
 couche 4: Application
 """
 def main():
-    
-    session = Session("d:/scripts/python/rsaencrypt")
+    ROOT = os.path.realpath(sys.argv[1])
+    print(ROOT)
+    session = Session(ROOT +"USB/scripts/python/rsaencrypt")
     session.start()
     
 if __name__ == '__main__':
