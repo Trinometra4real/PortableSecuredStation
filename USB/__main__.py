@@ -4,10 +4,13 @@ import sys,os
 couche 4: Application
 """
 def main():
-    ROOT = os.path.realpath(sys.argv[1])
+    ROOT = os.path.realpath(sys.argv[0])
     print(ROOT)
-    session = Session(ROOT +"USB/scripts/python/rsaencrypt")
-    session.start()
+    session = Session(ROOT)
+    try:
+        session.start()
+    except KeyboardInterrupt:
+        print("Process forced to stop")
     
 if __name__ == '__main__':
     main()

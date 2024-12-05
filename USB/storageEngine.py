@@ -1,39 +1,6 @@
-import os, hashlib
-SPATH = [0, 255,245,235, 0]
-SCONTENT = [0, 255,222,233, 0]
-EFILE = [255,240,0,240,255]
-class User:
-    def __init__(self, user:str, pwd:bytes,root:str, perms:int):
-        
-        
-        self.user = user
+import os, hashlib    
+from UserInterface import User
 
-        self.perms = perms
-        self.root = root
-        self.hasher = pwd
-    def checkPass(self,password:bytes):
-        return self.hasher== password
-        """new = open(root+"/DataUser.pack", "rb")
-        self.row = list(bytearray(new.read()))
-        new.close()
-
-        self.buildtree()
-
-    
-
-    def buildtree(self):
-        i=0
-        while i<self.row.__len__():
-            
-            path=[]
-            content=[]
-            if self.row[i:i+5] == SPATH:
-                while self.row[i:i+5] != SCONTENT:
-                    content.append(self.row[i])
-                    i+=1"""
-                    
-    
-    
 class ManageStorage:
     def __init__(self, path):
         self.pathstore = path+"/data/Storage.data"
@@ -94,20 +61,21 @@ class ManageStorage:
             bperms = self.content[i+99]
             
             while True:
-                try:
-                    buser.remove(0)
-                except ValueError:
+                if buser[0] == 0:
+                    del buser[0]
+                else:
                     break
             
             while True:
-                try:
-                    bpwdhash.remove(0)
-                except ValueError:
+                if bpwdhash[0] == 0:
+                    del bpwdhash[0]
+                else:
                     break
+
             while True:
-                try:
-                    broot.remove(0)
-                except ValueError:
+                if broot[0] == 0:
+                    del broot[0]
+                else:
                     break
             
             
@@ -121,3 +89,29 @@ class ManageStorage:
         new.write(bytearray(self.content))
         new.close()
 
+class File:
+    def __init__(self, path, content):
+        self.path = path
+        self.content = content
+    
+    def get(self):
+        return self.content
+    
+    def set(self, content:list):
+        self.content = content.copy()
+        
+
+    def write(self):
+        try:
+            new = open(self.path, "wb")
+            new.write(bytearray(self.content))
+            new.close()
+            return True
+        except FileNotFoundError:
+            print("failed to write up the file")
+            return False
+        except:
+            print("unknown error")
+            return False
+    def getPath(self):
+        return self.path
