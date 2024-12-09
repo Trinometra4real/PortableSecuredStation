@@ -4,7 +4,6 @@ from UserInterface import User
 class ManageStorage:
     def __init__(self, path):
         self.pathstore = path+"/data/Storage.data"
-        print(self.pathstore)
         if os.path.exists(self.pathstore):
             new = open(self.pathstore, "rb")
             self.content = list(new.read())
@@ -27,16 +26,16 @@ class ManageStorage:
         buser = list(bytearray(USER.user.encode("utf-8")))
         bpwdhash = list(bytearray(USER.hasher))
         bpermissions = USER.perms%256
-        broot = list(bytearray(USER.root.encode("utf-8")))
-        
+        broot = list(bytearray(USER.home.encode("utf-8")))
+        print(broot)
         a = 20-buser.__len__()
         for i in range(0, a):
             buser.insert(0,0)
 
-        a = 20-bpwdhash.__len__()
+        a = 40-bpwdhash.__len__()
         for i in range(0, a):
             bpwdhash.insert(0,0)
-        a = 59-broot.__len__()
+        a = 39-broot.__len__()
         for i in range(0, a):
             broot.insert(0,0)
             
@@ -44,20 +43,19 @@ class ManageStorage:
         Total.extend(bpwdhash)
         Total.extend(broot)
         Total.append(bpermissions)
-        print(Total.__len__())
-        self.content.extend(Total)
-        self.update()
-    
+        if Total.__len__() == 100:
+            self.content.extend(Total)
+            self.update()
+        else:
+            print("Internal error: User not allowed to be registered")
     def getUser(self, user)-> User|None:
         i=0
-        print(self.content.__len__())
         if self.content.__len__()<100:
             return None
         while i<self.content.__len__():
-            print(i)
             buser = self.content[i:i+20]
-            bpwdhash = self.content[i+20:i+40]
-            broot = self.content[i+40:99]
+            bpwdhash = self.content[i+20:i+60]
+            broot = self.content[i+60:99]
             bperms = self.content[i+99]
             
             while True:
@@ -89,29 +87,3 @@ class ManageStorage:
         new.write(bytearray(self.content))
         new.close()
 
-class File:
-    def __init__(self, path, content):
-        self.path = path
-        self.content = content
-    
-    def get(self):
-        return self.content
-    
-    def set(self, content:list):
-        self.content = content.copy()
-        
-
-    def write(self):
-        try:
-            new = open(self.path, "wb")
-            new.write(bytearray(self.content))
-            new.close()
-            return True
-        except FileNotFoundError:
-            print("failed to write up the file")
-            return False
-        except:
-            print("unknown error")
-            return False
-    def getPath(self):
-        return self.path

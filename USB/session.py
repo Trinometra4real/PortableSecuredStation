@@ -28,33 +28,34 @@ class Session:
         
     def login(self):
         while not self._login:
-            user = input("Enter user: ").replace(" ", "").capitalize()
+            user = input("Enter user (specials character excluded): ")
             pwd = getpass("Enter password: ").encode("utf-8")
             hasher = hashlib.md5()
             hasher.update(pwd)
             pwd = hasher.digest()
             USER = self.fileManager.getUser(user)
-            print(USER)
-            if USER != None:
-                if USER.checkPass(pwd):
-                    self.USER=USER
-                    print("Logged as "+user)
-                    self._login = True
-                    self.path = self.root+self.USER.root
- 
+            if Session.correct_User(user):
+                if USER != None:
+                    if USER.checkPass(pwd):
+                        self.USER=USER
+                        print("Logged as "+user)
+                        self._login = True
+                        self.path = self.root+self.USER.home
+    
+                    else:
+                        print("incorrect password")
+                        
                 else:
-                    print("incorrect password")
-                    
+                    USER = User(user, pwd, "/home/"+user+"/", 255)
+                    self.fileManager.storeUser(USER)
+                    self._login = True
+                    self.USER=USER
+                    print("Logged into a new account, "+self.USER.user)
+                    self.path=self.root+self.USER.home
+                    if not os.path.exists(self.path):
+                        os.mkdir(self.path)
             else:
-                USER = User(user, pwd, "/data/home/"+user+"/", 255)
-                self.fileManager.storeUser(USER)
-                self._login = True
-                self.USER=USER
-                print("Logged into a new account, "+self.USER.user)
-                self.path=self.root+self.USER.root
-                if not os.path.exists(self.path):
-                    os.mkdir(self.path)
-                
+                print("User format is incorrect, please retry:\nA user name must be smaller than 20 characters.")
         time.sleep(1.0)
 
     def start(self):
@@ -69,7 +70,10 @@ class Session:
             command = input(self.USER.user+"@localhost~$>").split(" ")
             
             try:
-                print(self.command[command[0]](command[1:]))
+                if command != " ":
+                    print(self.command[command[0]](command[1:]))
+                else:
+                    pass
             except Exception as f:
                 print(f)
                 print("incorrect command, please use help command")
@@ -97,6 +101,13 @@ class Session:
     def exit(self, params):
         self.Running = False
         return "Exiting session"
+    
+    def correct_User(user):
+        string  = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0987654321 _-()[]"
+        for char in user:
+            if not char in string:
+                return False
+        return True
 
 if __name__ == '__main__':
     main()

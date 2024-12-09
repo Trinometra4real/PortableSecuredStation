@@ -1,6 +1,5 @@
 SPATH = [0, 255,245,235, 0]
 SCONTENT = [0, 255,222,233, 0]
-from storageEngine import File
 
 
 class User:
@@ -10,11 +9,11 @@ class User:
         self.home = home
         self.hasher = pwd
         self.Data = []
-        new = open(home+"/DataUser.pack", "rb")
-        self.row = list(bytearray(new.read()))
-        new.close()
+        #new = open(home+"/DataUser.pack", "rb")
+        #self.row = list(bytearray(new.read()))
+        #new.close()
 
-        self.loadData()
+        #self.loadData()
 
     def loadData(self):
         i=0
@@ -39,7 +38,6 @@ class User:
 
     def checkPass(self,password:bytes):
         return self.hasher == password
-        """"""
                     
 
 class UserStorage:
@@ -48,15 +46,29 @@ class UserStorage:
         self.content = list(bytearray(new.read()))
         new.close()
         
+class File:
+    def __init__(self, path, content):
+        self.path = path
+        self.content = content
+    
+    def get(self):
+        return self.content
+    
+    def set(self, content:list):
+        self.content = content.copy()
+        
 
-        if folder != None:
-            for element in folder:
-                getdict = parcourir(element)
-                self.tree.update(getdict)              
-
-
-        if file != None:
-            for element in file:
-                getdict = parcourir(element)
-                self.tree.update(getdict)
-
+    def write(self):
+        try:
+            new = open(self.path, "wb")
+            new.write(bytearray(self.content))
+            new.close()
+            return True
+        except FileNotFoundError:
+            print("failed to write up the file")
+            return False
+        except:
+            print("unknown error")
+            return False
+    def getPath(self):
+        return self.path
