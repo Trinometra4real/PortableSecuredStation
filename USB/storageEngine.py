@@ -27,7 +27,6 @@ class ManageStorage:
         bpwdhash = list(bytearray(USER.hasher))
         bpermissions = USER.perms%256
         broot = list(bytearray(USER.home.encode("utf-8")))
-        print(broot)
         a = 20-buser.__len__()
         for i in range(0, a):
             buser.insert(0,0)
