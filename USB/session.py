@@ -1,4 +1,4 @@
-from USB.keyholder import KeyHolder
+from keyholder import KeyHolder
 from infos import *
 from getpass import getpass
 import os, hashlib, time, rsa
@@ -27,7 +27,7 @@ class Session:
         print(self.root)
         self.fileManager = ManageStorage(path)
         self.USER = None
-        
+        print("root is :"+self.root)
     def login(self):
         while not self._login:
             user = input("Enter user (specials character excluded): ")
@@ -48,17 +48,23 @@ class Session:
                         print("incorrect password")
                         
                 else:
+                    KeyHolder.GenNewKeys(self.path, passphrase)
+                    if not os.path.exists(self.path+"/home/"+user):
+                        os.rmdir(self.path+"/home/"+user)
+                    os.mkdir(self.path+"/home/"+user)
+                    USER = User(user, pwd, "/home/"+user+"/", 255)
+
+                    self.fileManager.storeUser(USER)
+                    self.USER=USER
+                    self._login = True
                     self.path=self.root+self.USER.home
                     if not os.path.exists(self.path):
                         os.mkdir(self.path)
                     new=open(self.path+"/DataUser.pack", "r")
                     new.write("")
-                    KeyHolder.GenNewKeys(self.path, passphrase)
+                    GenNewKeys(self.path, passphrase)
 
-                    USER = User(user, pwd, "/home/"+user+"/", 255)
-                    self.fileManager.storeUser(USER)
-                    self.USER=USER
-                    self._login = True
+                    
                     
                     print("Logged into a new account, "+self.USER.user)
             else:

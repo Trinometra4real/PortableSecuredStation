@@ -1,12 +1,10 @@
 import tkinter as TK
-import os
+import os, sys
 
 def main():
-    a = input("USB path: ")
-    if not decrypt(a):
-        print("Decrypt failed")
-
-    os.system("python.exe "+a)
+    
+    print(__file__.replace("./App/__main__.py", "/USB"))
+    os.system("python3 "+__file__.replace("/App/__main__.py", "/USB"))
     
     
 

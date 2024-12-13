@@ -63,28 +63,8 @@ class KeyHolder:
             return True
         else:
             return False
-    def GenNewKeys(path, passphrase):
-        pub, priv = rsa.newkeys(nbits=4096)
-        pub = pub.save_pkcs1()
-        priv = priv.save_pkcs1()
-        public = list(bytearray(pub))
-        private = list(bytearray(priv))
-        passphrase = list(bytearray(passphrase))
 
-        for i in range(0, public.__len__()):
-            public[i] = (public[i]-passphrase[i])%256
-        for i in range(0, private.__len__()):
-            private[i] = (private[i]-passphrase[i])%256
 
-        pub = bytes(bytearray(public))
-        priv = bytes(bytearray(private))
-
-        new = open(path+"private.key", "wb")
-        new.write(priv)
-        new.close()
-        new = open(path+"/public.crt", "wb")
-        new.close(pub)
-        new.close()
     
     def signMessage(self, msg:bytes):
         signed = rsa.sign(msg, self.private, "sha256")
@@ -103,7 +83,28 @@ class KeyHolder:
 
 
             
+def GenNewKeys(path, passphrase):
+    pub, priv = rsa.newkeys(nbits=4096)
+    pub = pub.save_pkcs1()
+    priv = priv.save_pkcs1()
+    public = list(bytearray(pub))
+    private = list(bytearray(priv))
+    passphrase = list(bytearray(passphrase))
 
+    for i in range(0, public.__len__()):
+        public[i] = (public[i]-passphrase[i])%256
+    for i in range(0, private.__len__()):
+        private[i] = (private[i]-passphrase[i])%256
+
+    pub = bytes(bytearray(public))
+    priv = bytes(bytearray(private))
+
+    new = open(path+"private.key", "wb")
+    new.write(priv)
+    new.close()
+    new = open(path+"/public.crt", "wb")
+    new.close(pub)
+    new.close()
 
 if __name__ == '__main__':
     main()
