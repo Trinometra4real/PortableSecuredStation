@@ -4,7 +4,7 @@ import os, sys
 def main():
     
     print(__file__.replace("./App/__main__.py", "/USB"))
-    os.system("python3 "+__file__.replace("/App/__main__.py", "/USB"))
+    os.system("sudo python3 "+__file__.replace("/App/__main__.py", "/USB"))
     
     
 

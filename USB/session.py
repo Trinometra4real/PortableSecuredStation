@@ -1,4 +1,4 @@
-from keyholder import KeyHolder
+from keyholder import KeyHolder, GenNewKeys
 from infos import *
 from getpass import getpass
 import os, hashlib, time, rsa
@@ -48,23 +48,39 @@ class Session:
                         print("incorrect password")
                         
                 else:
-                    KeyHolder.GenNewKeys(self.path, passphrase)
-                    if not os.path.exists(self.path+"/home/"+user):
-                        os.rmdir(self.path+"/home/"+user)
-                    os.mkdir(self.path+"/home/"+user)
-                    USER = User(user, pwd, "/home/"+user+"/", 255)
+                    if os.path.exists(self.root+"/home/"+user):
+                        try:
+                            os.remove(self.root+"/home/"+user+"/DataUser.pack")
+                        except:
+                            pass
+                        try:
+                            os.remove(self.root+"/home/"+user+"/private.key")
+                        except:
+                            pass
+                        try:
+                            os.remove(self.root+"/home/"+user+"/public.crt")
+                        except:
+                            pass
+                        try:
+                            os.rmdir(self.root+"/home/"+user)
+                        except:
+                            pass
+                    os.mkdir(self.root+"/home/"+user)
+                    print("Génération du porte-clés ...")
+                    GenNewKeys(self.root+"/home/"+user, passphrase)
+                    print("Keyholder Generated")
+                    new=open(self.root+"/home/"+user+"/DataUser.pack", "w")
+                    new.write("")
+                    new.close()
+                    USER = User(user, pwd, self.root+"/home/"+user, 255)
 
                     self.fileManager.storeUser(USER)
+                    print("user added to DB")
                     self.USER=USER
                     self._login = True
-                    self.path=self.root+self.USER.home
+                    self.path=self.USER.home
                     if not os.path.exists(self.path):
-                        os.mkdir(self.path)
-                    new=open(self.path+"/DataUser.pack", "r")
-                    new.write("")
-                    GenNewKeys(self.path, passphrase)
-
-                    
+                        os.mkdir(self.path)              
                     
                     print("Logged into a new account, "+self.USER.user)
             else:

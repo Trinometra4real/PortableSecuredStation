@@ -2,23 +2,35 @@ SPATH = [0, 255,245,235, 0]
 SCONTENT = [0, 255,222,233, 0]
 EPACK = [255,200,10,200,255]
 import os
-import keyholder
+from keyholder import KeyHolder
 
 class User:
     def __init__(self, user:str, pwd:bytes,home:str, perms:int):
         self.user = user
         self.perms = perms
         self.home = home
+        print(home)
         self.hasher = pwd
         self.Data = []
-        new = open(home+"/DataUser.pack", "rb")
-        self.row = list(bytearray(new.read()))
-        new.close()
         if os.path.exists(self.home+"/private.key") and os.path.exists(self.home+"/public.crt"):
-            self.keyholder = keyholder.KeyHolder(self.home)
+            self.keyholder = KeyHolder(self.home)
+            print("Keyholder initialized")
         else:
             print("Fatal Error: no cipher keys found")
             exit(0)
+    
+        try:
+            new = open(home+"/DataUser.pack", "rb")
+            encryptedData = list(bytearray(new.read()))
+            new.close()
+            self.row = self.keyholder.decrypt(encryptedData)
+
+        except FileNotFoundError:
+            new = open(home+"/DataUser.pack", "wb")
+            new.write(bytearray([0]))
+            new.close()
+
+        
 
         self.loadData()
 

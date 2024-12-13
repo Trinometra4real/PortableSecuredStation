@@ -16,11 +16,13 @@ class KeyHolder:
             new = open(home+"/public.crt", "rb")
             public = new.read()
             new.close()
-            self.passphrase = getpass.getpass("Enter uncrypting passphrase: ")
-            self.purifyKey(public, private)
+            self.passphrase = getpass.getpass("Enter uncrypting passphrase: ").encode()
+            if not self.purifyKey(public, private):
+                print("ERROR DECRYPTING KEY!")
         except FileNotFoundError:
             print('No cipher key found, fatal error')
             exit(0)
+        
 
     def newKeys(self):
         self.public, self.private = rsa.newkeys(nbits=4096)
@@ -40,18 +42,18 @@ class KeyHolder:
         self.passphrase = list(bytearray(self.passphrase))
 
         for i in range(0, self.public.__len__()):
-            self.public[i] = (self.public[i]-self.passphrase[i])%256
+            self.public[i] = (self.public[i]-self.passphrase[i%self.passphrase.__len__()])%256
         for i in range(0, self.private.__len__()):
-            self.private[i] = (self.private[i]-self.passphrase[i])%256
+            self.private[i] = (self.private[i]-self.passphrase[i%self.passphrase.__len__()])%256
 
-    def purifyKey(self, public, private):
+    def purifyKey(self, public, private) -> bool:
         public = list(bytearray(public))
         private = list(bytearray(private))
         self.passphrase = list(bytearray(self.passphrase))
         for i in range(0, public.__len__()):
-            public[i] = (public[i]+self.passphrase[i])%256
+            public[i] = (public[i]+self.passphrase[i%self.passphrase.__len__()])%256
         for i in range(0, private.__len__()):
-            private[i] = (private[i]+self.passphrase[i])%256
+            private[i] = (private[i]+self.passphrase[i%self.passphrase.__len__()])%256
         
         patternpub = "-----BEGIN RSA PUBLIC KEY-----"
         patternpub = list(bytearray(patternpub.encode("utf-8")))
@@ -66,22 +68,33 @@ class KeyHolder:
 
 
     
-    def signMessage(self, msg:bytes):
+    def signMessage(self, msg:bytes)-> bytes:
         signed = rsa.sign(msg, self.private, "sha256")
         return signed
 
-    def encrypt(self, msg):
+    def encrypt(self, msg:bytes)-> bytes:
         encrypted = rsa.encrypt(msg, self.public)
         return encrypted
     
-    def decrypt(self, encrypted):
+    def decrypt(self, encrypted:bytes)-> bytes:
         return rsa.decrypt(encrypted, self.private)
     
-    def verify(self, msg, Signature, distPub):
+    def verify(self, msg:bytes, Signature:bytes, distPub:rsa.key.PublicKey)-> str:
         return rsa.verify(msg, Signature, distPub)
 
 
-
+    def checkDifferences(A:list, B:list)-> list:
+        coordinates = []
+        if (A.__len__() != B.__len__()):
+            if A.__len__()> B.__len__():
+                maxlen = B.__len__()
+            else:
+                maxlen = A.__len__()
+        else:
+            maxlen = A.__len__()
+        for i in range(0, maxlen):
+            if A[i] != B[i]:
+                coordinates.append([A[i], B[i]])
             
 def GenNewKeys(path, passphrase):
     pub, priv = rsa.newkeys(nbits=4096)
@@ -92,18 +105,18 @@ def GenNewKeys(path, passphrase):
     passphrase = list(bytearray(passphrase))
 
     for i in range(0, public.__len__()):
-        public[i] = (public[i]-passphrase[i])%256
+        public[i] = (public[i]-passphrase[i%passphrase.__len__()])%256
     for i in range(0, private.__len__()):
-        private[i] = (private[i]-passphrase[i])%256
+        private[i] = (private[i]-passphrase[i%passphrase.__len__()])%256
 
     pub = bytes(bytearray(public))
     priv = bytes(bytearray(private))
 
-    new = open(path+"private.key", "wb")
+    new = open(path+"/private.key", "wb")
     new.write(priv)
     new.close()
     new = open(path+"/public.crt", "wb")
-    new.close(pub)
+    new.write(pub)
     new.close()
 
 if __name__ == '__main__':
