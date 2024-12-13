@@ -1,6 +1,8 @@
 SPATH = [0, 255,245,235, 0]
 SCONTENT = [0, 255,222,233, 0]
-
+EPACK = [255,200,10,200,255]
+import os
+import keyholder
 
 class User:
     def __init__(self, user:str, pwd:bytes,home:str, perms:int):
@@ -9,11 +11,16 @@ class User:
         self.home = home
         self.hasher = pwd
         self.Data = []
-        #new = open(home+"/DataUser.pack", "rb")
-        #self.row = list(bytearray(new.read()))
-        #new.close()
+        new = open(home+"/DataUser.pack", "rb")
+        self.row = list(bytearray(new.read()))
+        new.close()
+        if os.path.exists(self.home+"/private.key") and os.path.exists(self.home+"/public.crt"):
+            self.keyholder = keyholder.KeyHolder(self.home)
+        else:
+            print("Fatal Error: no cipher keys found")
+            exit(0)
 
-        #self.loadData()
+        self.loadData()
 
     def loadData(self):
         i=0
@@ -30,21 +37,29 @@ class User:
                     file = File(method[0], method[1])
                     self.fullTree.append(file)
                 methint = (1+methint)%2
-                
-
-
-        self.Data = fullbuffer.copy()
-        del fullbuffer
+        self.Data = self.fullTree.copy()
+        del self.fullTree
 
     def checkPass(self,password:bytes):
         return self.hasher == password
-                    
 
-class UserStorage:
-    def __init__(self, datapack:str):
-        new = open(datapack, "rb")
-        self.content = list(bytearray(new.read()))
-        new.close()
+    def writeData(self):
+        FileContent = []
+        for element in self.fullTree:
+            FileContent.extend(SPATH)
+            FileContent.extend(element.getPath()) # getPath -> list[int]
+            FileContent.extend(SCONTENT)
+            FileContent.extend(element.get())
+        FileContent.extend(EPACK)
+        new = open(self.home+"/DataUser.pack", "wb")
+        new.write(self.encrypt(bytes(bytearray(FileContent))))
+
+    def encrypt(self, msg:bytes) -> bytes:
+        return self.keyholder.encrypt(msg)
+
+    def decrypt(self, msg:bytes) -> bytes:
+        return self.keyholder.decrypt(msg)
+        
         
 class File:
     def __init__(self, path, content):

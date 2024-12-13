@@ -1,6 +1,8 @@
+from USB.keyholder import KeyHolder
 from infos import *
 from getpass import getpass
-import os, hashlib, time
+import os, hashlib, time, rsa
+
 
 from storageEngine import ManageStorage, User
 __all__ = ["Session", "User"]
@@ -29,9 +31,9 @@ class Session:
     def login(self):
         while not self._login:
             user = input("Enter user (specials character excluded): ")
-            pwd = getpass("Enter password: ").encode("utf-8")
+            passphrase = getpass("Enter password: ").encode("utf-8")
             hasher = hashlib.md5()
-            hasher.update(pwd)
+            hasher.update(passphrase)
             pwd = hasher.digest()
             USER = self.fileManager.getUser(user)
             if Session.correct_User(user):
@@ -46,16 +48,22 @@ class Session:
                         print("incorrect password")
                         
                 else:
-                    USER = User(user, pwd, "/home/"+user+"/", 255)
-                    self.fileManager.storeUser(USER)
-                    self._login = True
-                    self.USER=USER
-                    print("Logged into a new account, "+self.USER.user)
                     self.path=self.root+self.USER.home
                     if not os.path.exists(self.path):
                         os.mkdir(self.path)
+                    new=open(self.path+"/DataUser.pack", "r")
+                    new.write("")
+                    KeyHolder.GenNewKeys(self.path, passphrase)
+
+                    USER = User(user, pwd, "/home/"+user+"/", 255)
+                    self.fileManager.storeUser(USER)
+                    self.USER=USER
+                    self._login = True
+                    
+                    print("Logged into a new account, "+self.USER.user)
             else:
                 print("User format is incorrect, please retry:\nA user name must be smaller than 20 characters.")
+                
         time.sleep(1.0)
 
     def start(self):
