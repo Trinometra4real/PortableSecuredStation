@@ -60,8 +60,8 @@ class KeyHolder:
         patternpriv = "-----BEGIN RSA PRIVATE KEY-----"
         patternpriv = list(bytearray(patternpriv.encode("utf-8")))
         if public[0:patternpub.__len__()] == patternpub and private[0:patternpriv.__len__()] == patternpriv:
-            self.public = rsa.PublicKey.load_pkcs1(public)
-            self.private = rsa.PrivateKey.load_pkcs1(private)
+            self.public = rsa.PublicKey.load_pkcs1(bytes(bytearray(public)))
+            self.private = rsa.PrivateKey.load_pkcs1(bytes(bytearray(private)))
             return True
         else:
             return False

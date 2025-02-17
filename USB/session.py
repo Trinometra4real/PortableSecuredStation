@@ -27,7 +27,15 @@ class Session:
         print(self.root)
         self.fileManager = ManageStorage(path)
         self.USER = None
+        if os.path.exists(self.root+"/home"):
+            if os.path.isdir(self.root+"/home"):
+                pass
+            else:
+                os.mkdir(self.root+"/home")
+        else:
+            os.mkdir(self.root+"/home")
         print("root is :"+self.root)
+        
     def login(self):
         while not self._login:
             user = input("Enter user (specials character excluded): ")

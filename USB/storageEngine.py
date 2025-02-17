@@ -4,6 +4,15 @@ from UserInterface import User
 class ManageStorage:
     def __init__(self, path):
         self.pathstore = path+"/data/Storage.data"
+        if os.path.exists(path+"/data"):
+            if os.path.isdir(path+"/data"):
+                pass
+            else:
+                os.mkdir(path+"/data")
+        else:
+            os.mkdir(path+"/data")
+            
+                
         if os.path.exists(self.pathstore):
             new = open(self.pathstore, "rb")
             self.content = list(new.read())
