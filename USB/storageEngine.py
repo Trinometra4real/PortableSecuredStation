@@ -29,54 +29,48 @@ class ManageStorage:
         
     def storeUser(self, USER:User):
         buser = []
-        bpwdhash = []
+        
         bpermissions = []
         broot = []
         buser = list(bytearray(USER.user.encode("utf-8")))
-        bpwdhash = list(bytearray(USER.hasher))
         bpermissions = USER.perms%256
         broot = list(bytearray(USER.home.encode("utf-8")))
         a = 20-buser.__len__()
         for i in range(0, a):
             buser.insert(0,0)
 
-        a = 40-bpwdhash.__len__()
-        for i in range(0, a):
-            bpwdhash.insert(0,0)
-        a = 39-broot.__len__()
+        a = 139-broot.__len__()
         for i in range(0, a):
             broot.insert(0,0)
-            
+        print("buser ", buser.__len__())
         Total = buser
-        Total.extend(bpwdhash)
         Total.extend(broot)
         Total.append(bpermissions)
-        if Total.__len__() == 100:
+        
+        if Total.__len__() == 160:
             self.content.extend(Total)
             self.update()
+            return True
         else:
             print("Internal error: User not allowed to be registered")
-    def getUser(self, user)-> User|None:
+            return False
+        
+        
+    def getUser(self, user, pwd)-> User|None:
         i=0
-        if self.content.__len__()<100:
+        if self.content.__len__()<160:
             return None
         while i<self.content.__len__():
             buser = self.content[i:i+20]
-            bpwdhash = self.content[i+20:i+60]
-            broot = self.content[i+60:99]
-            bperms = self.content[i+99]
+            broot = self.content[i+20:159]
+            bperms = self.content[i+159]
             
             while True:
                 if buser[0] == 0:
                     del buser[0]
                 else:
                     break
-            
-            while True:
-                if bpwdhash[0] == 0:
-                    del bpwdhash[0]
-                else:
-                    break
+          
 
             while True:
                 if broot[0] == 0:
@@ -86,7 +80,7 @@ class ManageStorage:
             
             
             if (bytearray(buser)).decode("utf-8") == user:
-                return User(bytearray(buser).decode("utf-8"), bytearray(bpwdhash), bytearray(broot).decode("utf-8"), bperms)
+                return User(bytearray(buser).decode("utf-8"), pwd, bytearray(broot).decode("utf-8"), bperms)
             i+=100
         return None
     

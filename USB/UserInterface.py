@@ -13,7 +13,7 @@ class User:
         self.hasher = pwd
         self.Data = []
         if os.path.exists(self.home+"/private.key") and os.path.exists(self.home+"/public.crt"):
-            self.keyholder = KeyHolder(self.home)
+            self.keyholder = KeyHolder(self.home, self.hasher)
             print("Keyholder initialized")
         else:
             print("Fatal Error: no cipher keys found")
@@ -23,8 +23,10 @@ class User:
             new = open(home+"/DataUser.pack", "rb")
             encryptedData = list(bytearray(new.read()))
             new.close()
-            self.row = self.keyholder.decrypt(encryptedData)
-
+            if encryptedData!=[]:
+                self.row = self.keyholder.decrypt(encryptedData)
+            else:
+                self.row=[]
         except FileNotFoundError:
             new = open(home+"/DataUser.pack", "wb")
             new.write(bytearray([0]))
@@ -52,8 +54,8 @@ class User:
         self.Data = self.fullTree.copy()
         del self.fullTree
 
-    def checkPass(self,password:bytes):
-        return self.hasher == password
+    def checkPass(self):
+        return self.keyholder.purifyKey(self.hasher)
 
     def writeData(self):
         FileContent = []
@@ -71,7 +73,8 @@ class User:
 
     def decrypt(self, msg:bytes) -> bytes:
         return self.keyholder.decrypt(msg)
-        
+    
+            
         
 class File:
     def __init__(self, path, content):

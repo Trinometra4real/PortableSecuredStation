@@ -43,10 +43,12 @@ class Session:
             hasher = hashlib.md5()
             hasher.update(passphrase)
             pwd = hasher.digest()
-            USER = self.fileManager.getUser(user)
+            USER = self.fileManager.getUser(user, pwd)
+            print(user)
+            print(list(bytearray(user.encode("utf-8"))))
             if Session.correct_User(user):
                 if USER != None:
-                    if USER.checkPass(pwd):
+                    if USER.checkPass():
                         self.USER=USER
                         print("Logged as "+user)
                         self._login = True
@@ -75,22 +77,25 @@ class Session:
                             pass
                     os.mkdir(self.root+"/home/"+user)
                     print("Génération du porte-clés ...")
-                    GenNewKeys(self.root+"/home/"+user, passphrase)
+                    GenNewKeys(self.root+"/home/"+user, pwd)
                     print("Keyholder Generated")
                     new=open(self.root+"/home/"+user+"/DataUser.pack", "w")
                     new.write("")
                     new.close()
                     USER = User(user, pwd, self.root+"/home/"+user, 255)
 
-                    self.fileManager.storeUser(USER)
-                    print("user added to DB")
-                    self.USER=USER
-                    self._login = True
-                    self.path=self.USER.home
-                    if not os.path.exists(self.path):
-                        os.mkdir(self.path)              
-                    
-                    print("Logged into a new account, "+self.USER.user)
+                    if self.fileManager.storeUser(USER):
+                        print("user added to DB")
+                        self.USER=USER
+                        self._login = True
+                        self.path=self.USER.home
+                        if not os.path.exists(self.path):
+                            os.mkdir(self.path)              
+                        
+                        print("Logged into a new account, "+self.USER.user)
+                        self.fileManager.update()
+                    else:
+                        print("Failed to add user to the Database")
             else:
                 print("User format is incorrect, please retry:\nA user name must be smaller than 20 characters.")
                 
@@ -137,6 +142,7 @@ class Session:
         return "changed current directory to "+self.path
     
     def exit(self, params):
+        self.fileManager.update()
         self.Running = False
         return "Exiting session"
     
