@@ -146,6 +146,9 @@ class Session:
         self.Running = False
         return "Exiting session"
     
+    def install(self, params):
+        os.system("unzip -r "+params+" -d "+self.root+"/bin/")
+    
     def correct_User(user):
         string  = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0987654321 _-()[]"
         for char in user:

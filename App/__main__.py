@@ -1,15 +1,14 @@
 import tkinter as TK
 import os, sys
-
+from session import Session
 def main():
+    ROOT = __file__.replace("/App/__main__.py")
+    print("Welcome to Arsenal Builder !")
     
-    print(__file__.replace("./App/__main__.py", "/USB"))
-    os.system("sudo python3 "+__file__.replace("/App/__main__.py", "/USB"))
+    cmd = Session(ROOT)
+    cmd.start()
     
-    
-
-def decrypt(path):
-    return True
+    print("Session exited")
 
 if __name__ == "__main__":
     main()

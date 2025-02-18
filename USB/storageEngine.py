@@ -1,4 +1,4 @@
-import os, hashlib    
+import os   
 from UserInterface import User
 
 class ManageStorage:
