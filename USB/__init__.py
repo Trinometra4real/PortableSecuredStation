@@ -2,11 +2,11 @@
 from keyholder import *
 from session import Session
 from __main__ import *
-from infos import *
 from keyholder import *
 import logging
 
 __all__ = ["main", "Session", "helpCommand"]
+
 """
 Couche 0: Storage
 Couche 1: Encryption
