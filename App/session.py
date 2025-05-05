@@ -1,7 +1,8 @@
 from getpass import getpass
 import os, time
-from infos import *
-
+import infos
+from Libs.AppList import *
+import commands
 __all__ = ["Session", "User"]
 
 """
@@ -10,12 +11,14 @@ Couche 3:Session
 
 class Session:
     def __init__(self, path):
-        self.command = {
+        self.primary = {
             "help": self.help,
             "exit": self.exit,
             "ls":self.ls,
             "cd":self.cd
         }
+        self.command = commands.command.copy()
+        self.helpCommand = infos.helpCommand.copy()
         self.Running = True
         self._login = False
         self.permission = 0
@@ -33,8 +36,13 @@ class Session:
         
         time.sleep(1.0)
 
+    def help(self, params):
+        out = ""
+        for element in helpCommand.keys():
+            out = out +element+" : " + helpCommand[element] + "\n"
+        return out
+    
     def start(self):
-            
         while self.Running and self._login:
             command = input("@localhost~$>").split(" ")
             
@@ -46,50 +54,50 @@ class Session:
             except Exception as f:
                 print(f)
                 print("incorrect command, please use help command")
-            
-    def help(self, params):
-        out = ""
-        for element in helpCommand.keys():
-            out = out +element+" : " + helpCommand[element] + "\n"
-        return out
-    
-    def ls(self, params)->list:
-        liste = ""
-        print(self.path)
-        for element in os.listdir(self.path):
-            if os.path.isdir(self.path+element):
-                liste = liste + "d - "+element + "\n"
-            elif os.path.isfile(self.path+element):
-                liste = liste + "f - "+element + "\n"
-        return liste
 
-    def cd(self, params):
-        self.path = str(os.path.realpath(self.path+params[0]))+"/"
-        return "changed current directory to "+self.path
+    def install(self, package):
+        # take package folder and place it in Lib dir
+        os.system("mv "+package+" "+self.root+"/App/Libs/")
+        new = open(self.root+"/App/Libs/AppList.py", "a")
+        new.write("from "+package+" import *\n")
+        new.close()
     
+    def update(self):
+        ### update installed package list ###
+        os.remove(self.root+"/App/infos.py")
+        os.remove(self.root+"/App/commands.py")
+        packlist = []
+        
+        for pack in os.listdir(self.root+"/App/Libs"):
+            package = self.root+"/App/Libs/"+pack
+            if os.path.isdir(package):
+                packlist.append(pack)
+
+        #### command pointers update ####
+        new = open(self.root+"/App/commands.py", "a")
+        new.write("#### IMPORT ####")
+        for pack in packlist:
+            new.write("from Libs import "+pack)
+        new.write("\n#### INIT ####\ncommand={}\n\n####  BUILDUP ####")
+        for pack in packlist:
+            new.write("command.update("+pack+".Command)")
+        new.close()
+
+        ### help command update ###
+        new = open(self.root+"/App/infos.py", "a")
+        new.write("#### IMPORTS ####")
+        for pack in packlist:
+            new.write("from Libs import "+pack)
+
+        new.write("\n#### INIT ####\nhelpCommand = {}\n\n#### BUILDUP ####")
+        for pack in packlist:
+            new.write("helpCommand.update("+pack+".helpCommand)")
+        
+
+
     def exit(self, params):
         self.Running = False
         return "Exiting session"
     
-    def install(self, params):
-        os.system("unzip -r "+params+" -d "+self.root+"/bin/")
-        
-    def createusb(self, params):
-        if (os.path.exists(params[0])):
-            os.system("unzip -r "+self.root+"/USB.zip -d "+params[0])
-            return "Successfuly setted up !"
-        else:
-            return "Inexistant path, please retry with another one"
-        
-    def update(self, params):
-        os.system("/bin/bash "+self.root+"/installer.sh")
-        
-    def updateusb(self, params):
-        if (os.path.exists(params[0])):
-            os.system("unzip -or "+self.root+"/USB.zip -d "+params[0])
-            return "Successfuly setted up !"
-        else:
-            return "Inexistant path, please retry with another one"
-
 if __name__ == '__main__':
     main()

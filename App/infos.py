@@ -1,10 +1,8 @@
-__all_ = ["Session"]
-helpCommand = {
-    "help": "Show help for the commands to use",
-    "cd" : "Change directory",
-    "ls" : "List Directories and files",
-    "exit" : "close this session"
-}
+#### IMPORT ####
+from Libs import Basics
 
-if __name__ == '__main__':
-    main()
+#### INIT ####
+helpCommand = {}
+
+#### BUILDUP ####
+helpCommand.update(Basics.helpCommand)
