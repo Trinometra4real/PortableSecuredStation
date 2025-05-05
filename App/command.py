@@ -5,4 +5,4 @@ from Libs import Basics
 command = {}
 
 ####  BUILDUP ####
-command.update(Basics.Command)
+command.update(Basics.command.command)

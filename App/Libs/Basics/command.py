@@ -1,38 +1,49 @@
 import os    
 
 
-def ls(self, params)->list:
+def ls(data)->list:
     liste = ""
-    print(self.path)
-    for element in os.listdir(self.path):
-        if os.path.isdir(self.path+element):
+    path = data[1][0]
+    print(path)
+    for element in os.listdir(path):
+        if os.path.isdir(path+element):
             liste = liste + "d - "+element + "\n"
-        elif os.path.isfile(self.path+element):
+        elif os.path.isfile(element):
             liste = liste + "f - "+element + "\n"
-    return liste
+    return [liste, path]
 
-def cd(self, params):
-    self.path = str(os.path.realpath(self.path+params[0]))+"/"
-    return "changed current directory to "+self.path
+def cd(data):
+    path = data[1][0]
+    root = data[1[1]]
+    params = data[0]
+    path = str(os.path.realpath(path+params[0]))+"/"
+    return ["changed current directory to "+path, path]
     
-def createusb(self, params):
+def createusb(data):
+    path = data[1][0]
+    root = data[1[1]]
+    params = data[0]
     if (os.path.exists(params[0])):
-        os.system("unzip -r "+self.root+"/USB.zip -d "+params[0])
-        return "Successfuly setted up !"
+        os.system("unzip -r "+root+"/USB.zip -d "+params[0])
+        return ["Successfuly setted up !", path]
     else:
-        return "Inexistant path, please retry with another one"
+        return ["Inexistant path, please retry with another one", path]
 
-def updateusb(self, params):
+def updateusb(data):
+    path = data[1][0]
+    root = data[1[1]]
+    params = data[0]
     if (os.path.exists(params[0])):
-        os.system("unzip -or "+self.root+"/USB.zip -d "+params[0])
-        return "Successfuly setted up !"
+        os.system("unzip -or "+root+"/USB.zip -d "+params[0])
+        return ["Successfuly setted up !", path]
     else:
-        return "Inexistant path, please retry with another one"
+        return ["Inexistant path, please retry with another one", path]
 
 
 
 command = {
-    "exit": exit,
     "ls":ls,
-    "cd":cd
+    "cd":cd,
+    "createusb": createusb,
+    "updateusb": updateusb
 }

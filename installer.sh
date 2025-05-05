@@ -5,6 +5,6 @@ sudo apt -y update;
 sudo apt -y upgrade;
 sudo apt -y intall python3;
 sudo apt -y install pip;
-sudo pip install requests --break-system-package;
+
 
 

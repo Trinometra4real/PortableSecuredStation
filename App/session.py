@@ -1,8 +1,7 @@
 from getpass import getpass
 import os, time
 import infos
-from Libs.AppList import *
-import commands
+import command
 __all__ = ["Session", "User"]
 
 """
@@ -14,10 +13,10 @@ class Session:
         self.primary = {
             "help": self.help,
             "exit": self.exit,
-            "ls":self.ls,
-            "cd":self.cd
+            "install": self.install,
+            "update": self.update,
         }
-        self.command = commands.command.copy()
+        self.command = command.command.copy()
         self.helpCommand = infos.helpCommand.copy()
         self.Running = True
         self._login = False
@@ -38,29 +37,42 @@ class Session:
 
     def help(self, params):
         out = ""
-        for element in helpCommand.keys():
-            out = out +element+" : " + helpCommand[element] + "\n"
+        for element in self.helpCommand.keys():
+            out = out +element+" : " + self.helpCommand[element] + "\n"
         return out
     
     def start(self):
         while self.Running and self._login:
             command = input("@localhost~$>").split(" ")
-            
-            try:
-                if command != " ":
-                    print(self.command[command[0]](command[1:]))
-                else:
-                    pass
-            except Exception as f:
-                print(f)
+            if command[0] in self.primary.keys():
+                try:
+                    print(self.primary[command[0]](command[1:]))
+                except:
+                    print("incorrect command, please use help command")
+
+            elif command[0] in command.keys():
+                try:
+                    [output, self.path ] = self.command[command[0]]([command[1:], [self.path, self.root]])
+                    print(output)
+                except:
+                    print("incorrect command")
+                
+
+            else:
                 print("incorrect command, please use help command")
 
     def install(self, package):
         # take package folder and place it in Lib dir
-        os.system("mv "+package+" "+self.root+"/App/Libs/")
-        new = open(self.root+"/App/Libs/AppList.py", "a")
-        new.write("from "+package+" import *\n")
-        new.close()
+        if os.path.exists(package):
+            if os.path.isdir(package):
+                os.system("mv "+package+" "+self.root+"/App/Libs/")
+                print("Installation done, updating global app")
+                self.update()
+            else:
+                return "Cancelled: Package is not a directory"
+        else:
+            return "Cancelled: Package location isn't correct"
+
     
     def update(self):
         ### update installed package list ###
@@ -92,7 +104,8 @@ class Session:
         new.write("\n#### INIT ####\nhelpCommand = {}\n\n#### BUILDUP ####")
         for pack in packlist:
             new.write("helpCommand.update("+pack+".helpCommand)")
-        
+        new.close()
+        self.exit()
 
 
     def exit(self, params):
