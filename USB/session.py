@@ -26,7 +26,6 @@ class Session:
         self.permission = 0
         self.path = ""
         self.root = path
-        print(self.root)
         self.fileManager = ManageStorage(path)
         self.USER = None
         if os.path.exists(self.root+"/home"):
@@ -36,18 +35,17 @@ class Session:
                 os.mkdir(self.root+"/home")
         else:
             os.mkdir(self.root+"/home")
-        print("root is :"+self.root)
+       
         
     def login(self):
         while not self._login:
             user = input("Enter user (specials character excluded): ")
             passphrase = getpass("Enter password: ").encode("utf-8")
-            hasher = hashlib.md5()
+            hasher = hashlib.sha256()
             hasher.update(passphrase)
             pwd = hasher.digest()
             USER = self.fileManager.getUser(user, pwd)
-            print(user)
-            print(list(bytearray(user.encode("utf-8"))))
+
             if Session.correct_User(user):
                 if USER != None:
                     if USER.checkPass():

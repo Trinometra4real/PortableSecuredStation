@@ -1,14 +1,16 @@
 from math import dist
 import rsa
-import getpass
+import getpass, base64
+from Crypto.Cipher import AES
+from Crypto.Util.Padding import pad, unpad
 __all__ = ["KeyHolder"]
 """
 Couche 1: Encryption
 """
 
 class KeyHolder:
+    
     def __init__(self, home, passphrase:bytes):
-        print(list(bytearray(passphrase)))
         self.home = home
         try:
             new = open(home+"/private.key", "rb")
@@ -25,7 +27,7 @@ class KeyHolder:
         
 
     def newKeys(self):
-        self.public, self.private = rsa.newkeys(nbits=4096)
+        self.public, self.private = rsa.newkeys(nbits=2048)
     
     def close(self):
         self.poluteKey()
@@ -37,37 +39,28 @@ class KeyHolder:
     
 
     def poluteKey(self):
-        self.rowpublic = list(bytearray(self.public.save_pkcs1()))
-        self.rowprivate = list(bytearray(self.private.save_pkcs1()))
-        self.passphrase = list(bytearray(self.passphrase))
-
-        for i in range(0, self.rowpublic.__len__()):
-            self.rowpublic[i] = (self.rowpublic[i]-self.passphrase[i%self.passphrase.__len__()])%256
-        for i in range(0, self.rowprivate.__len__()):
-            self.rowprivate[i] = (self.rowprivate[i]-self.passphrase[i%self.passphrase.__len__()])%256
+        
+        aes= AES.new(self.passphrase, AES.MODE_ECB)
+        self.rowprivate=aes.encrypt(pad(self.private.save_pkcs1(), AES.block_size))
+        self.rowpublic=aes.decrypt(pad(self.public.save_pkcs1(), AES.block_size))
+        
 
     def purifyKey(self, passphrase) -> bool:
-        self.rowpublic = list(bytearray(self.rowpublic))
-        self.rowprivate = list(bytearray(self.rowprivate))
-        passphrase = list(bytearray(passphrase))
-        for i in range(0, self.rowpublic.__len__()):
-            self.rowpublic[i] = (self.rowpublic[i]+passphrase[i%passphrase.__len__()])%256
-        for i in range(0, self.rowprivate.__len__()):
-            self.rowprivate[i] = (self.rowprivate[i]+passphrase[i%passphrase.__len__()])%256
+        aes = AES.new(passphrase, AES.MODE_ECB)
+        self.rowprivate = unpad(aes.decrypt(self.rowprivate), AES.block_size)
+        self.rowpublic = unpad(aes.decrypt(self.rowpublic), AES.block_size)
         
         patternpub = "-----BEGIN RSA PUBLIC KEY-----"
-        patternpub = list(bytearray(patternpub.encode("utf-8")))
+        patternpub = patternpub.encode("utf-8")
         patternpriv = "-----BEGIN RSA PRIVATE KEY-----"
-        patternpriv = list(bytearray(patternpriv.encode("utf-8")))
+        patternpriv = patternpriv.encode("utf-8")
         
-        if self.rowpublic[0:patternpub.__len__()] == patternpub and self.rowprivate[0:patternpriv.__len__()] == patternpriv:
-            self.public = rsa.PublicKey.load_pkcs1(bytes(bytearray(self.rowpublic)))
-            self.private = rsa.PrivateKey.load_pkcs1(bytes(bytearray(self.rowprivate)))
+        if bytearray(self.rowpublic)[0:patternpub.__len__()] == patternpub and self.rowprivate[0:patternpriv.__len__()] == patternpriv:
+            self.public = rsa.PublicKey.load_pkcs1(self.rowpublic)
+            self.private = rsa.PrivateKey.load_pkcs1(self.rowprivate)
             return True
         else:
             return False
-
-
     
     def signMessage(self, msg:bytes)-> bytes:
         signed = rsa.sign(msg, self.private, "sha256")
@@ -97,23 +90,17 @@ class KeyHolder:
             if A[i] != B[i]:
                 coordinates.append([A[i], B[i]])
             
-def GenNewKeys(path, passphrase):
-    pub, priv = rsa.newkeys(nbits=4096)
+def GenNewKeys(path, passphrase:bytes):
+    pub, priv = rsa.newkeys(nbits=2048)
     
     pub = pub.save_pkcs1()
     priv = priv.save_pkcs1()
     
-    public = list(bytearray(pub))
-    private = list(bytearray(priv))
-    passphrase = list(bytearray(passphrase))
-
-    for i in range(0, public.__len__()):
-        public[i] = (public[i]-passphrase[i%passphrase.__len__()])%256
-    for i in range(0, private.__len__()):
-        private[i] = (private[i]-passphrase[i%passphrase.__len__()])%256
-
-    pub = bytes(bytearray(public))
-    priv = bytes(bytearray(private))
+    
+    aes  = AES.new(passphrase, AES.MODE_ECB)
+    pub = aes.encrypt(pad(pub, AES.block_size))
+    priv=aes.encrypt(pad(priv, AES.block_size))
+    
 
     new = open(path+"/private.key", "wb")
     new.write(priv)

@@ -5,6 +5,7 @@ sudo apt -y update;
 sudo apt -y upgrade;
 sudo apt -y intall python3;
 sudo apt -y install pip;
-pip install rsa Crypto --break-system-package
+sudo apt -y install pip;
+pip install rsa  --break-system-package;
 
 

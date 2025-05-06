@@ -42,7 +42,6 @@ class ManageStorage:
         a = 139-broot.__len__()
         for i in range(0, a):
             broot.insert(0,0)
-        print("buser ", buser.__len__())
         Total = buser
         Total.extend(broot)
         Total.append(bpermissions)
