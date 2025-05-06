@@ -19,8 +19,15 @@ class Session:
             "install": self.install,
             "update": self.update,
         }
+        self.helpPrimary = {
+            "help": "usage:\n\thelp [CMD]\n\ndisplay some hints about the use of different commands",
+            "exit": "usage:\n\texit\n\nClose this session and save the keys of the user",
+            "install" : "usage:\n\tinstall [package_path]\n\npermit to install packages, and includes more commands",
+            "update": "usage:\n\tupdate\n\nrefresh the application by listing packages, and reordening links/pointers",
+        }
         self.command = command.command.copy()
         self.helpCommand = infos.helpCommand.copy()
+        self.helpCommand.update(self.helpPrimary)
         self.Running = True
         self._login = False
         self.permission = 0
@@ -111,20 +118,28 @@ class Session:
             
         while self.Running and self._login:
             command = input(self.USER.user+"@localhost~$>").split(" ")
-            
-            try:
-                if command != " ":
-                    print(self.command[command[0]](command[1:]))
-                else:
-                    pass
-            except Exception as f:
-                print(f)
-                print("incorrect command, please use help command")
+            if command!=['']:
+                if command[0] in self.primary.keys():
+                    try:
+                        print(self.primary[command[0]](command[1:]))
+                    except:
+                        print("incorrect command, please use help command")
+
+                elif command[0] in self.command.keys():
+                    try:
+                        [output, self.path ] = self.command[command[0]]([command[1:], [self.path, self.root]])
+                        print(output)
+                    except:
+                        print("incorrect command, please use help command")
             
     def help(self, params):
         out = ""
-        for element in self.helpCommand.keys():
-            out = out +element+" : " + self.helpCommand[element] + "\n"
+        if params!=[]:
+            if params[0] in self.helpCommand.keys():
+                out+=self.helpCommand[params[0]]
+        else:
+            for key in self.helpCommand.keys():
+                out+=self.helpCommand[key]+"\n______________________________\n"
         return out
     
     def exit(self, params):

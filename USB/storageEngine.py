@@ -59,11 +59,13 @@ class ManageStorage:
         i=0
         if self.content.__len__()<160:
             return None
-        while i<self.content.__len__():
+        print(self.content.__len__())
+        while i+160<=self.content.__len__():
+            print(i)
             buser = self.content[i:i+20]
             broot = self.content[i+20:159]
             bperms = self.content[i+159]
-            
+            print(broot)
             while True:
                 if buser[0] == 0:
                     del buser[0]
@@ -72,6 +74,7 @@ class ManageStorage:
           
 
             while True:
+                print(broot)
                 if broot[0] == 0:
                     del broot[0]
                 else:
@@ -80,7 +83,7 @@ class ManageStorage:
             
             if (bytearray(buser)).decode("utf-8") == user:
                 return User(bytearray(buser).decode("utf-8"), pwd, bytearray(broot).decode("utf-8"), bperms)
-            i+=100
+            i+=160
         return None
     
     def update(self):

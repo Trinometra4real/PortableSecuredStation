@@ -1,7 +1,9 @@
+from keyholder import KeyHolder, GenNewKeys
+import infos, command
 from getpass import getpass
 import os, hashlib, time, rsa
-import infos, command
-from keyholder import KeyHolder, GenNewKeys
+
+
 from storageEngine import ManageStorage, User
 __all__ = ["Session", "User"]
 
@@ -17,14 +19,20 @@ class Session:
             "install": self.install,
             "update": self.update,
         }
+        self.helpPrimary = {
+            "help": "usage:\n\thelp [CMD]\n\ndisplay some hints about the use of different commands",
+            "exit": "usage:\n\texit\n\nClose this session and save the keys of the user",
+            "install" : "usage:\n\tinstall [package_path]\n\npermit to install packages, and includes more commands",
+            "update": "usage:\n\tupdate\n\nrefresh the application by listing packages, and reordening links/pointers",
+        }
         self.command = command.command.copy()
         self.helpCommand = infos.helpCommand.copy()
+        self.helpCommand.update(self.helpPrimary)
         self.Running = True
         self._login = False
         self.permission = 0
         self.path = ""
         self.root = path
-        print(self.root)
         self.fileManager = ManageStorage(path)
         self.USER = None
         if os.path.exists(self.root+"/home"):
@@ -34,9 +42,7 @@ class Session:
                 os.mkdir(self.root+"/home")
         else:
             os.mkdir(self.root+"/home")
-        print("root is :"+self.root)
-        
-        time.sleep(1.0)
+       
         
     def login(self):
         while not self._login:
@@ -46,8 +52,7 @@ class Session:
             hasher.update(passphrase)
             pwd = hasher.digest()
             USER = self.fileManager.getUser(user, pwd)
-            print(user)
-            print(list(bytearray(user.encode("utf-8"))))
+
             if Session.correct_User(user):
                 if USER != None:
                     if USER.checkPass():
@@ -103,39 +108,45 @@ class Session:
                 
         time.sleep(1.0)
 
-    def correct_User(user):
-        string  = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0987654321 _-()[]"
-        for char in user:
-            if not char in string:
-                return False
-        return True
-    
+    def start(self):
+        self.login()
+        if self._login:
+            pass
+        else:
+            print("No user logged, exiting")
+            self._login = False
+            
+        while self.Running and self._login:
+            command = input(self.USER.user+"@localhost~$>").split(" ")
+            if command!=['']:
+                if command[0] in self.primary.keys():
+                    try:
+                        print(self.primary[command[0]](command[1:]))
+                    except:
+                        print("incorrect command, please use help command")
+
+                elif command[0] in command.keys():
+                    try:
+                        [output, self.path ] = self.command[command[0]]([command[1:], [self.path, self.root]])
+                        print(output)
+                    except:
+                        print("incorrect command, please use help command")
+            
     def help(self, params):
         out = ""
-        for element in self.helpCommand.keys():
-            out = out +element+" : " + self.helpCommand[element] + "\n"
+        if params!=[]:
+            if params[0] in self.helpCommand.keys():
+                out+=self.helpCommand[params[0]]
+        else:
+            for key in self.helpCommand.keys():
+                out+=self.helpCommand[key]+"\n______________________________\n"
         return out
     
-    def start(self):
-        while self.Running and self._login:
-            command = input("@localhost~$>").split(" ")
-            if command[0] in self.primary.keys():
-                try:
-                    print(self.primary[command[0]](command[1:]))
-                except:
-                    print("incorrect command, please use help command")
-
-            elif command[0] in command.keys():
-                try:
-                    [output, self.path ] = self.command[command[0]]([command[1:], [self.path, self.root]])
-                    print(output)
-                except:
-                    print("incorrect command")
-                
-
-            else:
-                print("incorrect command, please use help command")
-
+    def exit(self, params):
+        self.fileManager.update()
+        self.Running = False
+        return "Exiting session"
+    
     def install(self, package):
         # take package folder and place it in Lib dir
         if os.path.exists(package):
@@ -147,7 +158,13 @@ class Session:
                 return "Cancelled: Package is not a directory"
         else:
             return "Cancelled: Package location isn't correct"
-
+    
+    def correct_User(user):
+        string  = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0987654321 _-()[]"
+        for char in user:
+            if not char in string:
+                return False
+        return True
     
     def update(self):
         ### update installed package list ###
@@ -183,9 +200,6 @@ class Session:
         self.exit()
 
 
-    def exit(self, params):
-        self.Running = False
-        return "Exiting session"
-    
 if __name__ == '__main__':
     main()
+    
