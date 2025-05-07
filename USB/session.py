@@ -125,7 +125,7 @@ class Session:
                     except:
                         print("incorrect command, please use help command")
 
-                elif command[0] in self.command.keys():
+                elif command[0] in command.keys():
                     try:
                         [output, self.path ] = self.command[command[0]]([command[1:], [self.path, self.root]])
                         print(output)
@@ -147,11 +147,13 @@ class Session:
         self.Running = False
         return "Exiting session"
     
-    def install(self, package):
+    def install(self, package:str):
         # take package folder and place it in Lib dir
         if os.path.exists(package):
             if os.path.isdir(package):
-                os.system("mv "+package+" "+self.root+"/App/Libs/")
+                os.system("mv "+package+" "+self.root+"Libs/")
+                print("installing required modules")
+                os.system("chmod +x "+self.root+"/"+package.split("/")[-1]+"; /bin/dash -c '"+self.root+"/"+package.split("/")[-1])
                 print("Installation done, updating global app")
                 self.update()
             else:
@@ -168,17 +170,17 @@ class Session:
     
     def update(self):
         ### update installed package list ###
-        os.remove(self.root+"/App/infos.py")
-        os.remove(self.root+"/App/commands.py")
+        os.remove(self.root+"infos.py")
+        os.remove(self.root+"commands.py")
         packlist = []
         
-        for pack in os.listdir(self.root+"/App/Libs"):
-            package = self.root+"/App/Libs/"+pack
+        for pack in os.listdir(self.root+"Libs"):
+            package = self.root+"Libs/"+pack
             if os.path.isdir(package):
                 packlist.append(pack)
 
         #### command pointers update ####
-        new = open(self.root+"/App/commands.py", "a")
+        new = open(self.root+"/commands.py", "a")
         new.write("#### IMPORT ####")
         for pack in packlist:
             new.write("from Libs import "+pack)
@@ -188,7 +190,7 @@ class Session:
         new.close()
 
         ### help command update ###
-        new = open(self.root+"/App/infos.py", "a")
+        new = open(self.root+"infos.py", "a")
         new.write("#### IMPORTS ####")
         for pack in packlist:
             new.write("from Libs import "+pack)

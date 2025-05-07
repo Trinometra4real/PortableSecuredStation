@@ -1,16 +1,19 @@
 import os    
 
+def pwd(data) :
+    path = data[1][0]
+    return [path, path]
 
 def ls(data)->list:
     liste = ""
     path = data[1][0]
     if data[0] != []:
         path=data[0][0]
-    print(path)
+    
     for element in os.listdir(path):
-        if os.path.isdir(path+element):
+        if os.path.isdir(path+"/"+element):
             liste = liste + "d - "+element + "\n"
-        elif os.path.isfile(element):
+        elif os.path.isfile(path+"/"+element):
             liste = liste + "f - "+element + "\n"
     return [liste, path]
 
@@ -44,6 +47,7 @@ def updateusb(data):
 
 
 command = {
+    "pwd":pwd,
     "ls":ls,
     "cd":cd,
     "createusb": createusb,

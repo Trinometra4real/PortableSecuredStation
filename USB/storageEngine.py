@@ -61,11 +61,9 @@ class ManageStorage:
             return None
         print(self.content.__len__())
         while i+160<=self.content.__len__():
-            print(i)
             buser = self.content[i:i+20]
-            broot = self.content[i+20:159]
+            broot = self.content[i+20:i+159]
             bperms = self.content[i+159]
-            print(broot)
             while True:
                 if buser[0] == 0:
                     del buser[0]
@@ -74,7 +72,6 @@ class ManageStorage:
           
 
             while True:
-                print(broot)
                 if broot[0] == 0:
                     del broot[0]
                 else:
