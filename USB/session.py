@@ -18,12 +18,16 @@ class Session:
             "exit": self.exit,
             "install": self.install,
             "update": self.update,
+            "dumpfiles": self.dumpFiles,
+            "importall": self.importAll
         }
         self.helpPrimary = {
             "help": "usage:\n\thelp [CMD]\n\ndisplay some hints about the use of different commands",
             "exit": "usage:\n\texit\n\nClose this session and save the keys of the user",
             "install" : "usage:\n\tinstall [package_path]\n\npermit to install packages, and includes more commands",
             "update": "usage:\n\tupdate\n\nrefresh the application by listing packages, and reordening links/pointers",
+            "dumpfiles": "usage:\n\tdumpfiles\n\nWrite all files stored in the user's home",
+            "importall":"usage:\n\timportall\n\nImport all the files from the clearfiles folder, and then erase them"
         }
         self.command = command.command.copy()
         self.helpCommand = infos.helpCommand.copy()
@@ -79,10 +83,15 @@ class Session:
                         except:
                             pass
                         try:
+                            os.system("rm -r "+self.root+"/home/"+user+"/*")
+                        except:
+                            pass
+                        try:
                             os.rmdir(self.root+"/home/"+user)
                         except:
                             pass
                     os.mkdir(self.root+"/home/"+user)
+                    os.mkdir(self.root+"/home/"+user+"/clearfiles")
                     print("Génération du porte-clés ...")
                     GenNewKeys(self.root+"/home/"+user, pwd)
                     print("Keyholder Generated")
@@ -101,6 +110,7 @@ class Session:
                         
                         print("Logged into a new account, "+self.USER.user)
                         self.fileManager.update()
+                        
                     else:
                         print("Failed to add user to the Database")
             else:
@@ -120,6 +130,7 @@ class Session:
             command = input(self.USER.user+"@localhost~$>").split(" ")
             if command!=['']:
                 if command[0] in self.primary.keys():
+                    print(self.primary[command[0]](command[1:]))
                     try:
                         print(self.primary[command[0]](command[1:]))
                     except:
@@ -144,6 +155,7 @@ class Session:
     
     def exit(self, params):
         self.fileManager.update()
+        self.USER.closeFiles()
         self.Running = False
         return "Exiting session"
     
@@ -160,6 +172,14 @@ class Session:
                 return "Cancelled: Package is not a directory"
         else:
             return "Cancelled: Package location isn't correct"
+        
+    def dumpFiles(self, params):
+        self.USER.dumpAll()
+        return "Dumped files"
+    
+    def importAll(self, params):
+        self.USER.importAll()
+        return "Imported Files"
     
     def correct_User(user):
         string  = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0987654321 _-()[]"

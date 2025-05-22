@@ -51,7 +51,7 @@ class Session:
             hasher = hashlib.sha256()
             hasher.update(passphrase)
             pwd = hasher.digest()
-            USER = self.fileManager.getUser(user, pwd)
+            USER = self.fileManager.getUser(user)
 
             if Session.correct_User(user):
                 if USER != None:

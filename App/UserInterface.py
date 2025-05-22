@@ -12,6 +12,7 @@ class User:
         print(home)
         self.hasher = pwd
         self.Data = []
+        print(home)
         if os.path.exists(self.home+"/private.key") and os.path.exists(self.home+"/public.crt"):
             self.keyholder = KeyHolder(self.home, self.hasher)
             print("Keyholder initialized")

@@ -14,12 +14,13 @@ class KeyHolder:
         self.home = home
         try:
             new = open(home+"/private.key", "rb")
-            self.rowprivate = new.read()
+            self.encrowprivate = new.read()
             new.close()
             new = open(home+"/public.crt", "rb")
-            self.rowpublic = new.read()
+            self.encrowpublic = new.read()
             new.close()
             self.passphrase = passphrase
+            
             
         except FileNotFoundError:
             print('No cipher key found, fatal error')
@@ -32,32 +33,33 @@ class KeyHolder:
     def close(self):
         self.poluteKey()
         with open(self.home+"/public.crt", "wb") as f:
-            f.write(self.rowpublic)
+            f.write(self.encrowpublic)
         with open(self.home+"/private.key", "wb") as f:
-            f.write(self.rowprivate)
+            f.write(self.encrowprivate)
         return True
     
 
     def poluteKey(self):
         
         aes= AES.new(self.passphrase, AES.MODE_ECB)
-        self.rowprivate=aes.encrypt(pad(self.private.save_pkcs1(), AES.block_size))
-        self.rowpublic=aes.decrypt(pad(self.public.save_pkcs1(), AES.block_size))
+        self.encrowprivate=base64.b64encode(aes.encrypt(pad(self.private.save_pkcs1(), 32)))
+        self.encrowpublic=base64.b64encode(aes.encrypt(pad(self.public.save_pkcs1(), 32)))
         
 
     def purifyKey(self, passphrase) -> bool:
         aes = AES.new(passphrase, AES.MODE_ECB)
-        self.rowprivate = unpad(aes.decrypt(self.rowprivate), AES.block_size)
-        self.rowpublic = unpad(aes.decrypt(self.rowpublic), AES.block_size)
+        
+        self.decrowprivate = unpad(aes.decrypt(base64.b64decode(self.encrowprivate)), 32)
+        self.decrowpublic = unpad(aes.decrypt(base64.b64decode(self.encrowpublic)), 32)
         
         patternpub = "-----BEGIN RSA PUBLIC KEY-----"
         patternpub = patternpub.encode("utf-8")
         patternpriv = "-----BEGIN RSA PRIVATE KEY-----"
         patternpriv = patternpriv.encode("utf-8")
         
-        if bytearray(self.rowpublic)[0:patternpub.__len__()] == patternpub and self.rowprivate[0:patternpriv.__len__()] == patternpriv:
-            self.public = rsa.PublicKey.load_pkcs1(self.rowpublic)
-            self.private = rsa.PrivateKey.load_pkcs1(self.rowprivate)
+        if list(bytearray(self.decrowpublic))[0:patternpub.__len__()] == list(bytearray(patternpub)) and list(bytearray(self.decrowprivate))[0:patternpriv.__len__()] == list(bytearray(patternpriv)):
+            self.public = rsa.PublicKey.load_pkcs1(self.decrowpublic)
+            self.private = rsa.PrivateKey.load_pkcs1(self.decrowprivate)
             return True
         else:
             return False
@@ -68,6 +70,9 @@ class KeyHolder:
 
     def encrypt(self, msg:bytes)-> bytes:
         encrypted = rsa.encrypt(msg, self.public)
+        
+            
+                
         return encrypted
     
     def decrypt(self, encrypted:bytes)-> bytes:
@@ -98,8 +103,8 @@ def GenNewKeys(path, passphrase:bytes):
     
     
     aes  = AES.new(passphrase, AES.MODE_ECB)
-    pub = aes.encrypt(pad(pub, AES.block_size))
-    priv=aes.encrypt(pad(priv, AES.block_size))
+    pub = base64.b64encode(aes.encrypt(pad(pub, 32)))
+    priv= base64.b64encode(aes.encrypt(pad(priv, 32)))
     
 
     new = open(path+"/private.key", "wb")
