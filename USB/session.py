@@ -127,18 +127,18 @@ class Session:
             self._login = False
             
         while self.Running and self._login:
-            command = input(self.USER.user+"@localhost~$>").split(" ")
-            if command!=['']:
-                if command[0] in self.primary.keys():
-                    print(self.primary[command[0]](command[1:]))
+            cmd = input(self.USER.user+"@localhost~$>").split(" ")
+            if cmd!=['']:
+                if cmd[0] in self.primary.keys():
+                    print(self.primary[cmd[0]](cmd[1:]))
                     try:
-                        print(self.primary[command[0]](command[1:]))
+                        print(self.primary[cmd[0]](cmd[1:]))
                     except:
                         print("incorrect command, please use help command")
 
-                elif command[0] in command.keys():
+                elif cmd[0] in self.command.keys():
                     try:
-                        [output, self.path ] = self.command[command[0]]([command[1:], [self.path, self.root]])
+                        [output, self.path ] = self.command[cmd[0]]([cmd[1:], [self.path, self.root]])
                         print(output)
                     except:
                         print("incorrect command, please use help command")

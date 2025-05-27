@@ -69,14 +69,43 @@ class KeyHolder:
         return signed
 
     def encrypt(self, msg:bytes)-> bytes:
-        encrypted = rsa.encrypt(msg, self.public)
+        buffer = list(bytearray(msg))
         
+        result = b''
+        while True:
+            if buffer.__len__()%245!=0:
+                buffer.append(0)
+            else:
+                break
+        i=0
+        print(buffer)
+        print("___________END BUFFER____________")
+        
+        while i<buffer.__len__():
+            row = rsa.encrypt(bytes(bytearray(buffer[i:i+244])), self.public)
+            result+=row
+            print(row)
             
-                
-        return encrypted
+            i+=245
+        
+        print("__________________END RESULT___________________")
+        
+        return result
     
     def decrypt(self, encrypted:bytes)-> bytes:
-        return rsa.decrypt(encrypted, self.private)
+        i=0
+        result=[]
+        while i<encrypted.__len__():
+            cryptorow = bytes(bytearray(list(bytearray(encrypted))[i:i+244]))
+            row = rsa.decrypt(cryptorow, self.private)
+            result.extend(list(bytearray(row)))
+            i+=245
+        while True:
+            if (result[-1]==0):
+                del result[-1]
+            else:
+                break
+        return bytearray(bytes(result))
     
     def verify(self, msg:bytes, Signature:bytes, distPub:rsa.key.PublicKey)-> str:
         return rsa.verify(msg, Signature, distPub)

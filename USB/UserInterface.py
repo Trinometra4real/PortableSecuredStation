@@ -103,12 +103,15 @@ class User:
         FileContent = []
         for element in self.Files:
             FileContent.extend(NAME)
+            print(element.getPath())
             FileContent.extend(list(bytearray(element.getPath().replace(self.home+"/clearfiles", "$APP").encode("utf-8"))))
             FileContent.extend(SCONTENT)
+            print(element.getContent())
             FileContent.extend(list(bytearray(element.getContent())))
         FileContent.extend(EPACK)
+        FileContent=bytes(bytearray(FileContent))
         new = open(self.home+"/DataUser.pack", "wb")
-        new.write(self.encrypt(bytes(bytearray(FileContent))))
+        new.write(self.encrypt(FileContent))
         new.close()
 
     def importAll(self):
@@ -121,6 +124,7 @@ class User:
                 os.remove(self.home+"/clearfiles/"+file)
                 
     def encrypt(self, msg:bytes) -> bytes:
+       
         return self.keyholder.encrypt(msg)
     
     def decrypt(self, msg:bytes) -> bytes:
