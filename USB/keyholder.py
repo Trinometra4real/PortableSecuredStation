@@ -83,6 +83,8 @@ class KeyHolder:
         
         while i<buffer.__len__():
             row = rsa.encrypt(bytes(bytearray(buffer[i:i+244])), self.public)
+            print("buffer: ", buffer[i:i+244].__len__())
+            print("row crypted: ", row.__len__())
             result+=row
             print(row)
             
@@ -96,10 +98,10 @@ class KeyHolder:
         i=0
         result=[]
         while i<encrypted.__len__():
-            cryptorow = bytes(bytearray(list(bytearray(encrypted))[i:i+244]))
+            cryptorow = bytes(bytearray(list(bytearray(encrypted))[i:i+255]))
             row = rsa.decrypt(cryptorow, self.private)
             result.extend(list(bytearray(row)))
-            i+=245
+            i+=256
         while True:
             if (result[-1]==0):
                 del result[-1]
@@ -107,22 +109,11 @@ class KeyHolder:
                 break
         return bytearray(bytes(result))
     
-    def verify(self, msg:bytes, Signature:bytes, distPub:rsa.key.PublicKey)-> str:
+    def verify(self, msg:bytes, Signature:bytes, distPub:rsa.PublicKey)-> str:
         return rsa.verify(msg, Signature, distPub)
 
 
-    def checkDifferences(A:list, B:list)-> list:
-        coordinates = []
-        if (A.__len__() != B.__len__()):
-            if A.__len__()> B.__len__():
-                maxlen = B.__len__()
-            else:
-                maxlen = A.__len__()
-        else:
-            maxlen = A.__len__()
-        for i in range(0, maxlen):
-            if A[i] != B[i]:
-                coordinates.append([A[i], B[i]])
+    
             
 def GenNewKeys(path, passphrase:bytes):
     pub, priv = rsa.newkeys(nbits=2048)
@@ -142,6 +133,15 @@ def GenNewKeys(path, passphrase:bytes):
     new = open(path+"/public.crt", "wb")
     new.write(pub)
     new.close()
-
-if __name__ == '__main__':
-    main()
+def checkDifferences(A:list, B:list)-> None:
+        coordinates = []
+        if (A.__len__() != B.__len__()):
+            if A.__len__()> B.__len__():
+                maxlen = B.__len__()
+            else:
+                maxlen = A.__len__()
+        else:
+            maxlen = A.__len__()
+        for i in range(0, maxlen):
+            if A[i] != B[i]:
+                coordinates.append([A[i], B[i]])

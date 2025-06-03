@@ -10,6 +10,7 @@ def main():
     try:
         session.start()
     except KeyboardInterrupt:
+        session.exit()
         print("Process forced to stop")
     
 if __name__ == '__main__':
