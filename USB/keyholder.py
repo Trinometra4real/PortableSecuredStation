@@ -1,6 +1,7 @@
 from math import dist
-import rsa
-import getpass, base64
+from Crypto.PublicKey import RSA as rsa
+from Crypto.Cipher import PKCS1_OAEP
+import getpass, base64, hashlib
 from Crypto.Cipher import AES
 from Crypto.Util.Padding import pad, unpad
 __all__ = ["KeyHolder"]
@@ -28,7 +29,10 @@ class KeyHolder:
         
 
     def newKeys(self):
-        self.public, self.private = rsa.newkeys(nbits=2048)
+        keys = rsa.generate(bits=2048)
+        self.private = rsa.import_key(keys.exportKey())
+        self.public = rsa.import_key(keys.public_key().export_key())
+        
     
     def close(self):
         self.poluteKey()
@@ -42,8 +46,8 @@ class KeyHolder:
     def poluteKey(self):
         
         aes= AES.new(self.passphrase, AES.MODE_ECB)
-        self.encrowprivate=base64.b64encode(aes.encrypt(pad(self.private.save_pkcs1(), 32)))
-        self.encrowpublic=base64.b64encode(aes.encrypt(pad(self.public.save_pkcs1(), 32)))
+        self.encrowprivate=base64.b64encode(aes.encrypt(pad(self.private.exportKey(), 32)))
+        self.encrowpublic=base64.b64encode(aes.encrypt(pad(self.public.exportKey(), 32)))
         
 
     def purifyKey(self, passphrase) -> bool:
@@ -58,68 +62,53 @@ class KeyHolder:
         patternpriv = patternpriv.encode("utf-8")
         
         if list(bytearray(self.decrowpublic))[0:patternpub.__len__()] == list(bytearray(patternpub)) and list(bytearray(self.decrowprivate))[0:patternpriv.__len__()] == list(bytearray(patternpriv)):
-            self.public = rsa.PublicKey.load_pkcs1(self.decrowpublic)
-            self.private = rsa.PrivateKey.load_pkcs1(self.decrowprivate)
+            
+            self.public = rsa.importKey(self.decrowpublic)
+            self.private = rsa.importKey(self.decrowprivate)
+            self.deccipher = PKCS1_OAEP.new(self.private)
+            self.enccipher = PKCS1_OAEP.new(self.public)
             return True
         else:
             return False
     
     def signMessage(self, msg:bytes)-> bytes:
-        signed = rsa.sign(msg, self.private, "sha256")
-        return signed
+        hash =hashlib.sha256(msg).digest()
+        finalbuffer=pow(int.from_bytes(hash, byteorder="big"), self.private.d, self.private.n).to_bytes(length=256, byteorder="big")
+        return finalbuffer
+        
 
-    def encrypt(self, msg:bytes)-> bytes:
-        buffer = list(bytearray(msg))
-        
-        result = b''
-        while True:
-            if buffer.__len__()%245!=0:
-                buffer.append(0)
-            else:
-                break
-        i=0
-        print(buffer)
-        print("___________END BUFFER____________")
-        
-        while i<buffer.__len__():
-            row = rsa.encrypt(bytes(bytearray(buffer[i:i+244])), self.public)
-            print("buffer: ", buffer[i:i+244].__len__())
-            print("row crypted: ", row.__len__())
-            result+=row
-            print(row)
-            
-            i+=245
-        
-        print("__________________END RESULT___________________")
-        
-        return result
+    def encrypt(self, buffer:bytes)-> bytes:
+        finalbuffer = b''
+        rest = buffer.__len__()%190
+        phase_num = int((buffer.__len__()-rest)/190)
+        for i in range(0,phase_num):
+            finalbuffer+= self.enccipher.encrypt(buffer[i*190:(i+1)*190])
+        finalbuffer+=self.enccipher.encrypt(buffer[phase_num*190:phase_num*190+rest])
+        return finalbuffer
+ 
+    def decrypt(self, buffer:bytes)-> bytes:
+        plainbuffer = b''
+        if (buffer.__len__()%256!=0):
+            return b''
+        else:
+            for i in range(0, buffer.__len__()//256):
+                plainbuffer+=self.deccipher.decrypt(buffer[i*256:(i+1)*256])
+        return plainbuffer
     
-    def decrypt(self, encrypted:bytes)-> bytes:
-        i=0
-        result=[]
-        while i<encrypted.__len__():
-            cryptorow = bytes(bytearray(list(bytearray(encrypted))[i:i+255]))
-            row = rsa.decrypt(cryptorow, self.private)
-            result.extend(list(bytearray(row)))
-            i+=256
-        while True:
-            if (result[-1]==0):
-                del result[-1]
-            else:
-                break
-        return bytearray(bytes(result))
-    
-    def verify(self, msg:bytes, Signature:bytes, distPub:rsa.PublicKey)-> str:
-        return rsa.verify(msg, Signature, distPub)
+    def verify(self, msg:bytes, Signature:bytes)-> bool:
+        hash = hashlib.sha256(msg).digest()
+        CryptoHash = pow(int.from_bytes(Signature, "big"), self.public.e, self.public.n).to_bytes(length=32, byteorder="big")
+        if (hash == CryptoHash):
 
-
-    
+            return True
+        else:
+            return False
             
 def GenNewKeys(path, passphrase:bytes):
-    pub, priv = rsa.newkeys(nbits=2048)
+    keys = rsa.generate(bits=2048)
     
-    pub = pub.save_pkcs1()
-    priv = priv.save_pkcs1()
+    pub = keys.public_key().export_key()
+    priv = keys.exportKey()
     
     
     aes  = AES.new(passphrase, AES.MODE_ECB)
@@ -133,6 +122,7 @@ def GenNewKeys(path, passphrase:bytes):
     new = open(path+"/public.crt", "wb")
     new.write(pub)
     new.close()
+
 def checkDifferences(A:list, B:list)-> None:
         coordinates = []
         if (A.__len__() != B.__len__()):

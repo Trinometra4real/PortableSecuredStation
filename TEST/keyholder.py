@@ -73,13 +73,7 @@ class KeyHolder:
     
     def signMessage(self, msg:bytes)-> bytes:
         hash =hashlib.sha256(msg).digest()
-        finalbuffer = b''
-        buffer = hash
-        rest = buffer.__len__()%190
-        phase_num = int((buffer.__len__()-rest)/190)
-        for i in range(0,phase_num):
-            finalbuffer+= self.deccipher.encrypt(buffer[i*190:(i+1)*190])
-        finalbuffer+=self.deccipher.encrypt(buffer[phase_num*190:phase_num*190+rest])
+        finalbuffer=pow(int.from_bytes(hash, byteorder="big"), self.private.d, self.private.n).to_bytes(length=256, byteorder="big")
         return finalbuffer
         
 
@@ -102,21 +96,13 @@ class KeyHolder:
         return plainbuffer
     
     def verify(self, msg:bytes, Signature:bytes)-> bool:
-        if (Signature.__len__()%256!=0):
-            return False
-        plainbuffer = b''
-        buffer = Signature
-        for i in range(0, buffer.__len__()//256):
-            plainbuffer+=self.enccipher.decrypt(buffer[i*256:(i+1)*256])
+        hash = hashlib.sha256(msg).digest()
+        CryptoHash = pow(int.from_bytes(Signature, "big"), self.public.e, self.public.n).to_bytes(length=32, byteorder="big")
+        if (hash == CryptoHash):
 
-        hash = hashlib.sha512(msg)
-        
-        if (hash == plainbuffer):
             return True
         else:
             return False
-
-    
             
 def GenNewKeys(path, passphrase:bytes):
     keys = rsa.generate(bits=2048)

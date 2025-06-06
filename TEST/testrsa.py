@@ -27,20 +27,13 @@ def decodeSerial(buffer:bytes, cipher:PKCS1_OAEP.PKCS1OAEP_Cipher):
 
 def SignBuffer(msg:bytes, private:rsa.RsaKey):
     hash =hashlib.sha256(msg).digest()
-
     finalbuffer=pow(int.from_bytes(hash, byteorder="big"), private.d, private.n).to_bytes(length=256, byteorder="big")
-    
-    
     return finalbuffer
 
 
 def verifySign(msg:bytes, Signature:bytes, public:rsa.RsaKey):
-
     hash = hashlib.sha256(msg).digest()
     CryptoHash = pow(int.from_bytes(Signature, "big"), public.e, public.n).to_bytes(length=32, byteorder="big")
-
-
-    print(CryptoHash, "\n --- \n", hash)
     if (hash == CryptoHash):
 
         return True
