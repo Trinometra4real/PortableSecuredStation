@@ -138,8 +138,9 @@ class Session:
 
                 elif cmd[0] in self.command.keys():
                     try:
-                        [output, self.path ] = self.command[cmd[0]]([cmd[1:], [self.path, self.root]])
+                        [output, self.path] = self.command[cmd[0]]([cmd[1:], [self.path, self.root]])
                         print(output)
+                        print(self.path)
                     except:
                         print("incorrect command, please use help command")
             

@@ -2,27 +2,34 @@ import os
 
 def pwd(data) :
     path = data[1][0]
-    return [path, path]
+    return [path, os.path.realpath(path)]
 
 def ls(data)->list:
     liste = ""
     path = data[1][0]
     if data[0] != []:
         path=data[0][0]
+    else:
+        path="."
     
     for element in os.listdir(path):
         if os.path.isdir(path+"/"+element):
             liste = liste + "d - "+element + "\n"
         elif os.path.isfile(path+"/"+element):
             liste = liste + "f - "+element + "\n"
-    return [liste, path]
+    return [liste, os.path.realpath(path)]
 
 def cd(data):
     path = data[1][0]
     root = data[1][1]
     params = data[0]
-    path = str(os.path.realpath(path+params[0]))+"/"
-    return ["changed current directory to "+path, path]
+    if (data[0]==[]):
+        return ["", os.path.realpath(root)]
+    if (os.path.exists(path+"/"+params[0])):
+        path = str(os.path.realpath(path+"/"+params[0]))
+        return ["changed current directory to "+path, path]
+    else:
+        return ["This directory do not exists", os.path.realpath(path)]
     
 def createusb(data):
     path = data[1][0]

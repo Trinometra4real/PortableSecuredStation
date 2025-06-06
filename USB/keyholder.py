@@ -14,7 +14,9 @@ class KeyHolder:
     def __init__(self, home, passphrase:bytes):
         self.home = home
         try:
+            print(home+"/private.key")
             new = open(home+"/private.key", "rb")
+            
             self.encrowprivate = new.read()
             new.close()
             new = open(home+"/public.crt", "rb")
@@ -56,12 +58,12 @@ class KeyHolder:
         self.decrowprivate = unpad(aes.decrypt(base64.b64decode(self.encrowprivate)), 32)
         self.decrowpublic = unpad(aes.decrypt(base64.b64decode(self.encrowpublic)), 32)
         
-        patternpub = "-----BEGIN RSA PUBLIC KEY-----"
+        patternpub = "-----BEGIN PUBLIC KEY-----"
         patternpub = patternpub.encode("utf-8")
         patternpriv = "-----BEGIN RSA PRIVATE KEY-----"
         patternpriv = patternpriv.encode("utf-8")
-        
-        if list(bytearray(self.decrowpublic))[0:patternpub.__len__()] == list(bytearray(patternpub)) and list(bytearray(self.decrowprivate))[0:patternpriv.__len__()] == list(bytearray(patternpriv)):
+
+        if self.decrowpublic[0:patternpub.__len__()] == patternpub and self.decrowprivate[0:patternpriv.__len__()] == patternpriv:
             
             self.public = rsa.importKey(self.decrowpublic)
             self.private = rsa.importKey(self.decrowprivate)
