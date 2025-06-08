@@ -73,10 +73,10 @@ class KeyHolder:
         else:
             return False
     
-    def signMessage(self, msg:bytes)-> bytes:
+    def signMessage(self, msg:bytes)-> str:
         hash =hashlib.sha256(msg).digest()
         finalbuffer=pow(int.from_bytes(hash, byteorder="big"), self.private.d, self.private.n).to_bytes(length=256, byteorder="big")
-        return finalbuffer
+        return base64.b64encode(finalbuffer).decode("utf-8")
         
 
     def encrypt(self, buffer:bytes)-> bytes:
@@ -97,8 +97,9 @@ class KeyHolder:
                 plainbuffer+=self.deccipher.decrypt(buffer[i*256:(i+1)*256])
         return plainbuffer
     
-    def verify(self, msg:bytes, Signature:bytes)-> bool:
+    def verify(self, msg:bytes, b64Sign:str)-> bool:
         hash = hashlib.sha256(msg).digest()
+        Signature = base64.b64decode(b64Sign.encode("utf-8"))
         CryptoHash = pow(int.from_bytes(Signature, "big"), self.public.e, self.public.n).to_bytes(length=32, byteorder="big")
         if (hash == CryptoHash):
 

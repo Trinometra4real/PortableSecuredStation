@@ -42,6 +42,10 @@ class KeyHolder:
             f.write(self.encrowprivate)
         return True
     
+    def setAuthor(self, public_key:bytes):
+        self.authorpub = rsa.import_key(public_key)
+
+    
 
     def poluteKey(self):
         
@@ -97,9 +101,8 @@ class KeyHolder:
     
     def verify(self, msg:bytes, Signature:bytes)-> bool:
         hash = hashlib.sha256(msg).digest()
-        CryptoHash = pow(int.from_bytes(Signature, "big"), self.public.e, self.public.n).to_bytes(length=32, byteorder="big")
+        CryptoHash = pow(int.from_bytes(Signature, "big"), self.authorpub.e, self.authorpub.n).to_bytes(length=32, byteorder="big")
         if (hash == CryptoHash):
-
             return True
         else:
             return False

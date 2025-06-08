@@ -14,7 +14,9 @@ class KeyHolder:
     def __init__(self, home, passphrase:bytes):
         self.home = home
         try:
+            print(home+"/private.key")
             new = open(home+"/private.key", "rb")
+            
             self.encrowprivate = new.read()
             new.close()
             new = open(home+"/public.crt", "rb")
@@ -56,12 +58,12 @@ class KeyHolder:
         self.decrowprivate = unpad(aes.decrypt(base64.b64decode(self.encrowprivate)), 32)
         self.decrowpublic = unpad(aes.decrypt(base64.b64decode(self.encrowpublic)), 32)
         
-        patternpub = "-----BEGIN RSA PUBLIC KEY-----"
+        patternpub = "-----BEGIN PUBLIC KEY-----"
         patternpub = patternpub.encode("utf-8")
         patternpriv = "-----BEGIN RSA PRIVATE KEY-----"
         patternpriv = patternpriv.encode("utf-8")
-        
-        if list(bytearray(self.decrowpublic))[0:patternpub.__len__()] == list(bytearray(patternpub)) and list(bytearray(self.decrowprivate))[0:patternpriv.__len__()] == list(bytearray(patternpriv)):
+
+        if self.decrowpublic[0:patternpub.__len__()] == patternpub and self.decrowprivate[0:patternpriv.__len__()] == patternpriv:
             
             self.public = rsa.importKey(self.decrowpublic)
             self.private = rsa.importKey(self.decrowprivate)
@@ -71,10 +73,10 @@ class KeyHolder:
         else:
             return False
     
-    def signMessage(self, msg:bytes)-> bytes:
+    def signMessage(self, msg:bytes)-> str:
         hash =hashlib.sha256(msg).digest()
         finalbuffer=pow(int.from_bytes(hash, byteorder="big"), self.private.d, self.private.n).to_bytes(length=256, byteorder="big")
-        return finalbuffer
+        return base64.b64encode(finalbuffer).decode("utf-8")
         
 
     def encrypt(self, buffer:bytes)-> bytes:
@@ -95,8 +97,9 @@ class KeyHolder:
                 plainbuffer+=self.deccipher.decrypt(buffer[i*256:(i+1)*256])
         return plainbuffer
     
-    def verify(self, msg:bytes, Signature:bytes)-> bool:
+    def verify(self, msg:bytes, b64Sign:str)-> bool:
         hash = hashlib.sha256(msg).digest()
+        Signature = base64.b64decode(b64Sign.encode("utf-8"))
         CryptoHash = pow(int.from_bytes(Signature, "big"), self.public.e, self.public.n).to_bytes(length=32, byteorder="big")
         if (hash == CryptoHash):
 

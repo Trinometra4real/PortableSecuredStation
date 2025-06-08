@@ -30,6 +30,18 @@ class Session:
             "importall":"usage:\n\timportall\n\nImport all the files from the clearfiles folder, and then erase them"
         }
         self.command = command.command.copy()
+        args = self.command.keys()
+        self.userInit = []
+        toDelete = []
+
+        for element in self.command.keys():
+            if (element.contains("__user__")):
+                self.userInit.append(self.command[element])
+                toDelete.append(element)
+
+        for element in toDelete:
+            del self.command[element]
+
         self.helpCommand = infos.helpCommand.copy()
         self.helpCommand.update(self.helpPrimary)
         self.Running = True
@@ -121,7 +133,8 @@ class Session:
     def start(self):
         self.login()
         if self._login:
-            pass
+            for element in self.userInit:
+                self.userInit[element](self.USER)
         else:
             print("No user logged, exiting")
             self._login = False
