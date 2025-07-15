@@ -2,26 +2,27 @@ import os
 from UserInterface import User
 
 class ManageStorage:
-    def __init__(self, path):
-        self.pathstore = path+"/data/Storage.data"
-        if os.path.exists(path+"/data"):
-            if os.path.isdir(path+"/data"):
+    def __init__(self, root):
+        self.root=root
+        self.path = root+"/data/Storage.data"
+        if os.path.exists(root+"/data"):
+            if os.path.isdir(root+"/data"):
                 pass
             else:
-                os.mkdir(path+"/data")
+                os.mkdir(root+"/data")
         else:
-            os.mkdir(path+"/data")
+            os.mkdir(root+"/data")
             
                 
-        if os.path.exists(self.pathstore):
-            new = open(self.pathstore, "rb")
+        if os.path.exists(self.path):
+            new = open(self.path, "rb")
             self.content = list(new.read())
             new.close()
             if self.content == [0]:
                 self.content = []
             
         else:
-            new = open(self.pathstore, "wb")
+            new = open(self.path, "wb")
             self.content = []
             new.write(bytearray([0]))
             new.close()
@@ -34,7 +35,8 @@ class ManageStorage:
         broot = []
         buser = list(bytearray(USER.user.encode("utf-8")))
         bpermissions = USER.perms%256
-        broot = list(bytearray(USER.home.encode("utf-8")))
+        broot = list(bytearray(USER.home.replace(self.root, "").encode("utf-8")))
+        print("path without root: "+USER.home.replace(self.root, ""))
         a = 20-buser.__len__()
         for i in range(0, a):
             buser.insert(0,0)
@@ -59,7 +61,6 @@ class ManageStorage:
         i=0
         if self.content.__len__()<160:
             return None
-        print(self.content.__len__())
         while i+160<=self.content.__len__():
             buser = self.content[i:i+20]
             broot = self.content[i+20:i+159]
@@ -79,12 +80,12 @@ class ManageStorage:
             
             
             if (bytearray(buser)).decode("utf-8") == user:
-                return User(bytearray(buser).decode("utf-8"), pwd, bytearray(broot).decode("utf-8"), bperms)
+                return User(bytearray(buser).decode("utf-8"), pwd, self.root+bytearray(broot).decode("utf-8"), bperms)
             i+=160
         return None
     
     def update(self):
-        new = open(self.pathstore, "wb")
+        new = open(self.path, "wb")
         new.write(bytearray(self.content))
         new.close()
 

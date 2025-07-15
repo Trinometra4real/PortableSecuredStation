@@ -1,5 +1,5 @@
 from keyholder import KeyHolder, GenNewKeys
-import infos, command
+import infos, commands
 from getpass import getpass
 import os, hashlib, time, rsa
 
@@ -29,14 +29,18 @@ class Session:
             "dumpfiles": "usage:\n\tdumpfiles\n\nWrite all files stored in the user's home",
             "importall":"usage:\n\timportall\n\nImport all the files from the clearfiles folder, and then erase them"
         }
-        self.command = command.command.copy()
+        self.command = commands.command.copy()
         args = self.command.keys()
         self.userInit = []
+        self.killSign = []
         toDelete = []
-
+        
         for element in self.command.keys():
-            if (element.contains("__user__")):
+            if (element.startswith("INIT")):
                 self.userInit.append(self.command[element])
+                toDelete.append(element)
+            elif (element.startswith("CLOSE")):
+                self.killSign.append(self.command[element])
                 toDelete.append(element)
 
         for element in toDelete:
@@ -47,9 +51,10 @@ class Session:
         self.Running = True
         self._login = False
         self.permission = 0
-        self.path = ""
+        self.path = path
         self.root = path
-        self.fileManager = ManageStorage(path)
+        self.fileManager = ManageStorage(self.root)
+        print(path)
         self.USER = None
         if os.path.exists(self.root+"/home"):
             if os.path.isdir(self.root+"/home"):
@@ -75,7 +80,7 @@ class Session:
                         self.USER=USER
                         print("Logged as "+user)
                         self._login = True
-                        self.path = self.root+self.USER.home
+                        self.path = self.USER.home
     
                     else:
                         print("incorrect password")
@@ -134,7 +139,7 @@ class Session:
         self.login()
         if self._login:
             for element in self.userInit:
-                self.userInit[element](self.USER)
+                element(self.USER)
         else:
             print("No user logged, exiting")
             self._login = False
@@ -143,17 +148,21 @@ class Session:
             cmd = input(self.USER.user+"@localhost~$>").split(" ")
             if cmd!=['']:
                 if cmd[0] in self.primary.keys():
-                    print(self.primary[cmd[0]](cmd[1:]))
+                    
                     try:
                         print(self.primary[cmd[0]](cmd[1:]))
                     except:
-                        print("incorrect command, please use help command")
+                        print("incorrect command, please use help command")    
+                        
 
                 elif cmd[0] in self.command.keys():
+                    
+                    args = cmd[1:].copy()
+                    args.extend([self.path, self.root])
+                    [output, self.path] = self.command[cmd[0]]( args )
                     try:
-                        [output, self.path] = self.command[cmd[0]]([cmd[1:], [self.path, self.root]])
+                        [output, self.path] = self.command[cmd[0]]( args )
                         print(output)
-                        print(self.path)
                     except:
                         print("incorrect command, please use help command")
             
@@ -167,9 +176,12 @@ class Session:
                 out+=self.helpCommand[key]+"\n______________________________\n"
         return out
     
-    def exit(self, params):
+    def exit(self, params=None):
         self.fileManager.update()
         self.USER.closeFiles()
+        for element in self.killSign:
+            element()
+            
         self.Running = False
         return "Exiting session"
     
@@ -177,21 +189,24 @@ class Session:
         # take package folder and place it in Lib dir
         if os.path.exists(package):
             if os.path.isdir(package):
-                os.system("mv "+package+" "+self.root+"Libs/")
-                print("installing required modules")
-                os.system("chmod +x "+self.root+"/"+package.split("/")[-1]+"; /bin/dash -c '"+self.root+"/"+package.split("/")[-1])
-                print("Installation done, updating global app")
-                self.update()
+                if ("infos.py" in os.listdir(package) and "command.py"in os.listdir(package) and "__init__.py" in os.listdir(package) and "required.sh" in os.listdir(package)):
+                    os.system("mv "+package+" "+self.root+"Libs/")
+                    print("installing required modules")
+                    os.system("chmod +x "+self.root+"/"+package.split("/")[-1]+"; /bin/dash -c '"+self.root+"/"+package.split("/")[-1])
+                    print("Installation done, updating global app")
+                    self.update()
+                else:
+                    return "Package is not an installable directory"
             else:
                 return "Cancelled: Package is not a directory"
         else:
             return "Cancelled: Package location isn't correct"
         
-    def dumpFiles(self, params):
+    def dumpFiles(self, params=None):
         self.USER.dumpAll()
         return "Dumped files"
     
-    def importAll(self, params):
+    def importAll(self, params=None):
         self.USER.importAll()
         return "Imported Files"
     
@@ -202,38 +217,38 @@ class Session:
                 return False
         return True
     
-    def update(self):
+    def update(self, params=None):
         ### update installed package list ###
-        os.remove(self.root+"infos.py")
-        os.remove(self.root+"commands.py")
+        os.remove(self.root+"/infos.py")
+        os.remove(self.root+"/commands.py")
         packlist = []
         
-        for pack in os.listdir(self.root+"Libs"):
-            package = self.root+"Libs/"+pack
+        for pack in os.listdir(self.root+"/Libs"):
+            
+            package = self.root+"/Libs/"+pack
             if os.path.isdir(package):
                 packlist.append(pack)
-
         #### command pointers update ####
         new = open(self.root+"/commands.py", "a")
         new.write("#### IMPORT ####")
         for pack in packlist:
-            new.write("from Libs import "+pack)
-        new.write("\n#### INIT ####\ncommand={}\n\n####  BUILDUP ####")
+            new.write("\nfrom Libs import "+pack)
+        new.write("\n\n#### INIT ####\ncommand={}\n\n####  BUILDUP ####")
         for pack in packlist:
-            new.write("command.update("+pack+".Command)")
+            new.write("\ncommand.update("+pack+".command.command)")
         new.close()
 
         ### help command update ###
-        new = open(self.root+"infos.py", "a")
-        new.write("#### IMPORTS ####")
+        new = open(self.root+"/infos.py", "a")
+        new.write("#### IMPORTS ####\n")
         for pack in packlist:
-            new.write("from Libs import "+pack)
+            new.write("from Libs import "+pack+"\n")
 
-        new.write("\n#### INIT ####\nhelpCommand = {}\n\n#### BUILDUP ####")
+        new.write("\n#### INIT ####\nhelpCommand = {}\n\n#### BUILDUP ####\n")
         for pack in packlist:
-            new.write("helpCommand.update("+pack+".helpCommand)")
+            new.write("helpCommand.update("+pack+".infos.helpCommand)\n")
         new.close()
-        self.exit()
+        return self.exit()
 
 
 if __name__ == '__main__':

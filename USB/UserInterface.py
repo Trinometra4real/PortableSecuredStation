@@ -28,13 +28,11 @@ class User:
         self.user = user
         self.perms = perms
         self.home = home
-        print(home)
         self.hasher = pwd
         self.Files = []
         if os.path.exists(self.home+"/private.key") and os.path.exists(self.home+"/public.crt"):
             self.keyholder = KeyHolder(self.home, self.hasher)
             if (self.keyholder.purifyKey(self.hasher)):
-                
                 print("Keyholder initialized")
             else:
                 print("incorrect password")
@@ -49,28 +47,33 @@ class User:
             encryptedData = new.read()
             new.close()
             if list(bytearray(encryptedData))!=[]:
-                    self.row = self.keyholder.decrypt(encryptedData)
+                self.row = self.keyholder.decrypt(encryptedData)
             else:
                 self.row=[]
         except FileNotFoundError:
+            print("User data reset !")
             new = open(home+"/DataUser.pack", "wb")
             new.write(bytearray([0]))
             new.close()
+            
         self.loadData()
 
     def loadData(self):
+        print("Importing user's data")
         self.row=list(bytearray(self.row))
         i=0
         while True:
             content = []
             name = []
             mode = 1
-            if (self.row.__len__()==i):
+            if (self.row.__len__()<=i):
+                print("end of file, no data detected")
                 break
             else:
                 if (self.row[i:i+4]==NAME):
                     if content!=[]:
-                        self.Files.append(File(bytes(bytearray(name)).decode("utf-8").replace("$APP", self.home+"/clearfiles"), bytes(bytearray(content))))
+                        print(bytes(bytearray(name)))
+                        self.Files.append(File(bytes(bytearray(name)).decode("utf-8"), bytes(bytearray(content))))
                         
                     i+=5
                     mode = (mode+1)%2
@@ -80,6 +83,9 @@ class User:
                     i+=5
                     mode = (mode+1)%2
                 elif (self.row[i:i+4]==EPACK):
+                    if content!=[]:
+                        print(bytes(bytearray(name)))
+                        self.Files.append(File(bytes(bytearray(name)).decode("utf-8"), bytes(bytearray(content))))
                     break
                     
                 elif mode == 0:
@@ -88,12 +94,14 @@ class User:
                 elif mode==1:
                     content.append(self.row[i])
                     i+=1
+        self.dumpAll()
                     
     def checkPass(self):
         return self.keyholder.purifyKey(self.hasher)
     
     def dumpAll(self):
         for files in self.Files:
+            print(files.getPath())
             files.write()
             
         self.Files = []
@@ -104,9 +112,8 @@ class User:
         for element in self.Files:
             FileContent.extend(NAME)
             print(element.getPath())
-            FileContent.extend(list(bytearray(element.getPath().replace(self.home+"/clearfiles", "$APP").encode("utf-8"))))
+            FileContent.extend(list(bytearray(element.getPath().encode("utf-8"))))
             FileContent.extend(SCONTENT)
-            print(element.getContent())
             FileContent.extend(list(bytearray(element.getContent())))
         FileContent.extend(EPACK)
         FileContent=bytes(bytearray(FileContent))
