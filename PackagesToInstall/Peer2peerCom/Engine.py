@@ -1,7 +1,7 @@
 import socket
 import threading
 from message import Message
-from UserInterface import User
+from ...UserInterface import User
 import time 
 import rsa
 class peer2peer:

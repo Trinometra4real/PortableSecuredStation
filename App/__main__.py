@@ -1,14 +1,17 @@
-import tkinter as TK
-import os, sys
 from session import Session
+import sys,os
+"""
+couche 4: Application
+"""
 def main():
-    ROOT = __file__.replace("/__main__.py", "")
-    print("Welcome to Arsenal Builder !")
+    ROOT = "/usr/lib/PSS"
+    print(ROOT)
+    session = Session(ROOT)
+    try:
+        session.start()
+    except KeyboardInterrupt:
+        session.exit()
+        print("Process forced to stop")
     
-    cmd = Session(ROOT)
-    cmd.start()
-    
-    print("Session exited")
-
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()

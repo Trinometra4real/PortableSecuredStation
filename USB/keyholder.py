@@ -48,7 +48,7 @@ class KeyHolder:
         
         aes= AES.new(self.passphrase, AES.MODE_ECB)
         self.encrowprivate=base64.b64encode(aes.encrypt(pad(self.private.exportKey(), 32)))
-        self.encrowpublic=base64.b64encode(aes.encrypt(pad(self.public.exportKey(), 32)))
+        self.encrowpublic=base64.b64encode(aes.encrypt(pad(self.Mypublic.exportKey(), 32)))
         
 
     def purifyKey(self, passphrase) -> bool:
@@ -65,10 +65,10 @@ class KeyHolder:
 
             if self.decrowpublic[0:patternpub.__len__()] == patternpub and self.decrowprivate[0:patternpriv.__len__()] == patternpriv:
                 
-                self.public = rsa.importKey(self.decrowpublic)
+                self.Mypublic = rsa.importKey(self.decrowpublic)
                 self.private = rsa.importKey(self.decrowprivate)
                 self.deccipher = PKCS1_OAEP.new(self.private)
-                self.enccipher = PKCS1_OAEP.new(self.public)
+                self.enccipher = PKCS1_OAEP.new(self.Mypublic)
                 return True
             else:
                 return False

@@ -15,6 +15,7 @@ class KeyHolder:
         self.home = home
         try:
             new = open(home+"/private.key", "rb")
+            
             self.encrowprivate = new.read()
             new.close()
             new = open(home+"/public.crt", "rb")
@@ -42,10 +43,6 @@ class KeyHolder:
             f.write(self.encrowprivate)
         return True
     
-    def setAuthor(self, public_key:bytes):
-        self.authorpub = rsa.import_key(public_key)
-
-    
 
     def poluteKey(self):
         
@@ -55,30 +52,33 @@ class KeyHolder:
         
 
     def purifyKey(self, passphrase) -> bool:
-        aes = AES.new(passphrase, AES.MODE_ECB)
-        
-        self.decrowprivate = unpad(aes.decrypt(base64.b64decode(self.encrowprivate)), 32)
-        self.decrowpublic = unpad(aes.decrypt(base64.b64decode(self.encrowpublic)), 32)
-        
-        patternpub = "-----BEGIN RSA PUBLIC KEY-----"
-        patternpub = patternpub.encode("utf-8")
-        patternpriv = "-----BEGIN RSA PRIVATE KEY-----"
-        patternpriv = patternpriv.encode("utf-8")
-        
-        if list(bytearray(self.decrowpublic))[0:patternpub.__len__()] == list(bytearray(patternpub)) and list(bytearray(self.decrowprivate))[0:patternpriv.__len__()] == list(bytearray(patternpriv)):
+        try:
+            aes = AES.new(passphrase, AES.MODE_ECB)
             
-            self.public = rsa.importKey(self.decrowpublic)
-            self.private = rsa.importKey(self.decrowprivate)
-            self.deccipher = PKCS1_OAEP.new(self.private)
-            self.enccipher = PKCS1_OAEP.new(self.public)
-            return True
-        else:
+            self.decrowprivate = unpad(aes.decrypt(base64.b64decode(self.encrowprivate)), 32)
+            self.decrowpublic = unpad(aes.decrypt(base64.b64decode(self.encrowpublic)), 32)
+            
+            patternpub = "-----BEGIN PUBLIC KEY-----"
+            patternpub = patternpub.encode("utf-8")
+            patternpriv = "-----BEGIN RSA PRIVATE KEY-----"
+            patternpriv = patternpriv.encode("utf-8")
+
+            if self.decrowpublic[0:patternpub.__len__()] == patternpub and self.decrowprivate[0:patternpriv.__len__()] == patternpriv:
+                
+                self.public = rsa.importKey(self.decrowpublic)
+                self.private = rsa.importKey(self.decrowprivate)
+                self.deccipher = PKCS1_OAEP.new(self.private)
+                self.enccipher = PKCS1_OAEP.new(self.public)
+                return True
+            else:
+                return False
+        except:
             return False
     
-    def signMessage(self, msg:bytes)-> bytes:
+    def signMessage(self, msg:bytes)-> str:
         hash =hashlib.sha256(msg).digest()
         finalbuffer=pow(int.from_bytes(hash, byteorder="big"), self.private.d, self.private.n).to_bytes(length=256, byteorder="big")
-        return finalbuffer
+        return base64.b64encode(finalbuffer).decode("utf-8")
         
 
     def encrypt(self, buffer:bytes)-> bytes:
@@ -99,10 +99,12 @@ class KeyHolder:
                 plainbuffer+=self.deccipher.decrypt(buffer[i*256:(i+1)*256])
         return plainbuffer
     
-    def verify(self, msg:bytes, Signature:bytes)-> bool:
+    def verify(self, msg:bytes, b64Sign:str)-> bool:
         hash = hashlib.sha256(msg).digest()
-        CryptoHash = pow(int.from_bytes(Signature, "big"), self.authorpub.e, self.authorpub.n).to_bytes(length=32, byteorder="big")
+        Signature = base64.b64decode(b64Sign.encode("utf-8"))
+        CryptoHash = pow(int.from_bytes(Signature, "big"), self.public.e, self.public.n).to_bytes(length=32, byteorder="big")
         if (hash == CryptoHash):
+
             return True
         else:
             return False

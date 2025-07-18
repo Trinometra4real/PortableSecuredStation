@@ -1,5 +1,4 @@
 from keyholder import KeyHolder, GenNewKeys
-import infos, commands
 from getpass import getpass
 import os, hashlib, time, rsa
 
@@ -13,6 +12,11 @@ Couche 3:Session
 
 class Session:
     def __init__(self, path):
+        self.Running = True
+        self._login = False
+        self.permission = 0
+        self.path = path
+        self.root = path
         self.primary = {
             "help": self.help,
             "exit": self.exit,
@@ -29,6 +33,42 @@ class Session:
             "dumpfiles": "usage:\n\tdumpfiles\n\nWrite all files stored in the user's home",
             "importall":"usage:\n\timportall\n\nImport all the files from the clearfiles folder, and then erase them"
         }
+        
+        try:
+            import infos, commands
+        except:
+            print("Failed to import methods, updating local libs")
+            ### update installed package list ###
+            os.remove(self.root+"/infos.py")
+            os.remove(self.root+"/commands.py")
+            packlist = []
+            
+            for pack in os.listdir(self.root+"/Libs"):
+                
+                package = self.root+"/Libs/"+pack
+                if os.path.isdir(package):
+                    packlist.append(pack)
+            #### command pointers update ####
+            new = open(self.root+"/commands.py", "a")
+            new.write("#### IMPORT ####")
+            for pack in packlist:
+                new.write("\nfrom Libs import "+pack)
+            new.write("\n\n#### INIT ####\ncommand={}\n\n####  BUILDUP ####")
+            for pack in packlist:
+                new.write("\ncommand.update("+pack+".command.command)")
+            new.close()
+
+            ### help command update ###
+            new = open(self.root+"/infos.py", "a")
+            new.write("#### IMPORTS ####\n")
+            for pack in packlist:
+                new.write("from Libs import "+pack+"\n")
+
+            new.write("\n#### INIT ####\nhelpCommand = {}\n\n#### BUILDUP ####\n")
+            for pack in packlist:
+                new.write("helpCommand.update("+pack+".infos.helpCommand)\n")
+            new.close()
+            import infos, commands
         self.command = commands.command.copy()
         args = self.command.keys()
         self.userInit = []
@@ -48,11 +88,6 @@ class Session:
 
         self.helpCommand = infos.helpCommand.copy()
         self.helpCommand.update(self.helpPrimary)
-        self.Running = True
-        self._login = False
-        self.permission = 0
-        self.path = path
-        self.root = path
         self.fileManager = ManageStorage(self.root)
         print(path)
         self.USER = None
@@ -148,7 +183,6 @@ class Session:
             cmd = input(self.USER.user+"@localhost~$>").split(" ")
             if cmd!=['']:
                 if cmd[0] in self.primary.keys():
-                    
                     try:
                         print(self.primary[cmd[0]](cmd[1:]))
                     except:
@@ -159,7 +193,6 @@ class Session:
                     
                     args = cmd[1:].copy()
                     args.extend([self.path, self.root])
-                    [output, self.path] = self.command[cmd[0]]( args )
                     try:
                         [output, self.path] = self.command[cmd[0]]( args )
                         print(output)
@@ -185,16 +218,24 @@ class Session:
         self.Running = False
         return "Exiting session"
     
-    def install(self, package:str):
+    def install(self, data:list):
+        package = data[0]
+        print(package)
+        
         # take package folder and place it in Lib dir
+        if (package.startswith(".")):
+            package = package.replace(".", self.path)
+        elif (not package.startswith("/")):
+            package = self.path+package
+        print(package)
         if os.path.exists(package):
             if os.path.isdir(package):
                 if ("infos.py" in os.listdir(package) and "command.py"in os.listdir(package) and "__init__.py" in os.listdir(package) and "required.sh" in os.listdir(package)):
-                    os.system("mv "+package+" "+self.root+"Libs/")
+                    os.system("mv "+package+" "+self.root+"/Libs/")
                     print("installing required modules")
-                    os.system("chmod +x "+self.root+"/"+package.split("/")[-1]+"; /bin/dash -c '"+self.root+"/"+package.split("/")[-1])
+                    os.system("chmod +x "+self.root+"/Libs/"+package.split("/")[-1]+"/required.sh;\n/bin/bash "+self.root+"/Libs/"+package.split("/")[-1]+"/required.sh")
                     print("Installation done, updating global app")
-                    self.update()
+                    return self.update()
                 else:
                     return "Package is not an installable directory"
             else:

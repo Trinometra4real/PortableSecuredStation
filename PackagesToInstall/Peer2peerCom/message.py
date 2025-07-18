@@ -1,4 +1,4 @@
-from UserInterface import User
+from ...UserInterface import User
 import json
 import rsa
 import base64

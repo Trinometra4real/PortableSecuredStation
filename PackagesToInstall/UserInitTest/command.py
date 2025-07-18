@@ -1,15 +1,14 @@
-from . import UserInterface
+from ...UserInterface import User
 class TestUser:
     def __init__(self):
-        print("user inited")
         pass
     
-    def init(self, User:UserInterface.User):
+    def init(self, User:User):
         self.user = User
     
     def getUserName(self, params:list):
-        
-        return self.user.user
+        return [self.user.user, params[-2]]
+    
     def __close__(self):
         self.user=None
         
