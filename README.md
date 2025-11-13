@@ -1,6 +1,7 @@
 # PortableSecuredStation
 A simple Portable Secured Station to store secret data into a self manage encrypted storage system
 
+*Warning: Unsecure Repository*
 
 **Non-Root User installation**
 
@@ -30,4 +31,5 @@ sudo chown -R root:$groupname $APP_PATH
  - /etc/$APP -> Perm 760: config files for the application
 
 *tmpfs*
+
 sudo mount -t tmpfs -o size=10M tmpfs /mnt/mytmpfs -> permet de monter le tmpfs dans un répertoire pour un stockage de 10 méga
